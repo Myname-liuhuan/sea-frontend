@@ -14,11 +14,7 @@ export default defineConfig({
       dts: 'src/auto-imports.d.ts',
     }),
     Components({
-      resolvers: [
-        ArcoResolver({
-          sideEffect: true,
-        }),
-      ],
+      resolvers: [ArcoResolver()],
       dts: 'src/components.d.ts',
     }),
   ],
@@ -36,7 +32,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'http://localhost:9080',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },

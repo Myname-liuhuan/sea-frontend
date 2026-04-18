@@ -1,106 +1,393 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useUserStore } from '@/stores'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useUserStore, useMenuStore } from '@/stores'
+import { getMyMenuTree } from '@/api/auth'
+import type { SysMenu } from '@/types'
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
+const menuStore = useMenuStore()
+
 const collapsed = ref(false)
+
+const menuItems = computed(() => {
+  return buildMenuItems(menuStore.menuTree)
+})
+
+function buildMenuItems(menus: SysMenu[]) {
+  return menus
+    .filter((m) => m.menuType !== 2)
+    .map((menu) => ({
+      key: menu.path || '/',
+      title: menu.menuName,
+      icon: menu.icon,
+      children: menu.children ? buildMenuItems(menu.children) : undefined,
+    }))
+}
+
+const selectedKey = computed(() => route.path)
+
+async function loadMenus() {
+  if (!menuStore.menuTree.length) {
+    try {
+      const res = await getMyMenuTree()
+      if (res.code === 200) {
+        menuStore.setMenuTree(res.data)
+      }
+    } catch (_error) {
+      // ignore
+    }
+  }
+}
+
+function handleMenuClick(key: string) {
+  router.push(key)
+}
 
 function handleLogout() {
   userStore.clearToken()
+  menuStore.clearMenuTree()
   router.push('/login')
 }
+
+const userNickname = computed(() => {
+  const info = userStore.userInfo as { nickname?: string; username?: string }
+  return info?.nickname || info?.username || '用户'
+})
+
+onMounted(() => {
+  loadMenus()
+})
 </script>
 
 <template>
-  <a-layout class="app-layout">
-    <a-layout-sider
-      :collapsed="collapsed"
-      collapsible
-      :width="220"
-      breakpoint="lg"
-      @collapse="(val: boolean) => (collapsed = val)"
-    >
-      <div class="logo">
-        <span v-if="!collapsed">Sea Admin</span>
-        <span v-else>S</span>
+  <div class="layout">
+    <!-- 侧边栏 -->
+    <aside class="sidebar" :class="{ collapsed }">
+      <div class="sidebar-header">
+        <div class="logo" @click="collapsed = !collapsed">
+          <div class="logo-icon">
+            <svg viewBox="0 0 32 32" fill="none">
+              <path d="M16 4L28 10V22L16 28L4 22V10L16 4Z" stroke="currentColor" stroke-width="2"/>
+              <path d="M16 10L22 13V19L16 22L10 19V13L16 10Z" fill="currentColor"/>
+            </svg>
+          </div>
+          <span v-if="!collapsed" class="logo-text">Sea Admin</span>
+        </div>
       </div>
-      <a-menu
-        :default-selected-keys="['Home']"
-        :style="{ width: '100%' }"
-        @menu-item-click="(key: string) => router.push({ name: key })"
-      >
-        <a-menu-item key="Home">
-          <template #icon><icon-home /></template>
-          首页
-        </a-menu-item>
-        <a-menu-item key="About">
-          <template #icon><icon-info-circle /></template>
-          关于
-        </a-menu-item>
-      </a-menu>
-    </a-layout-sider>
 
-    <a-layout>
-      <a-layout-header class="app-header">
-        <a-space>
-          <a-typography-text style="color: var(--color-text-1)">
-            Sea Frontend
-          </a-typography-text>
-        </a-space>
-        <a-space>
-          <a-button type="text" @click="handleLogout">退出登录</a-button>
-        </a-space>
-      </a-layout-header>
+      <nav class="sidebar-nav">
+        <div class="nav-item" :class="{ active: selectedKey === '/home' }" @click="handleMenuClick('/home')">
+          <span class="nav-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </span>
+          <span v-if="!collapsed" class="nav-text">首页</span>
+        </div>
 
-      <a-layout-content class="app-content">
-        <router-view />
-      </a-layout-content>
+        <template v-for="menu in menuItems" :key="menu.key">
+          <div
+            v-if="!menu.children"
+            class="nav-item"
+            :class="{ active: selectedKey === menu.key }"
+            @click="handleMenuClick(menu.key)"
+          >
+            <span class="nav-icon" v-html="menu.icon"></span>
+            <span v-if="!collapsed" class="nav-text">{{ menu.title }}</span>
+          </div>
 
-      <a-layout-footer class="app-footer">
-        Sea Frontend &copy; {{ new Date().getFullYear() }}
-      </a-layout-footer>
-    </a-layout>
-  </a-layout>
+          <div v-else class="nav-group" :class="{ collapsed }">
+            <div class="nav-group-title" v-if="!collapsed">
+              <span class="nav-icon" v-html="menu.icon"></span>
+              <span class="nav-text">{{ menu.title }}</span>
+            </div>
+            <div
+              v-for="child in menu.children"
+              :key="child.key"
+              class="nav-item sub"
+              :class="{ active: selectedKey === child.key }"
+              @click="handleMenuClick(child.key)"
+            >
+              <span v-if="!collapsed" class="nav-text">{{ child.title }}</span>
+            </div>
+          </div>
+        </template>
+      </nav>
+    </aside>
+
+    <!-- 主内容区 -->
+    <div class="main">
+      <header class="header">
+        <div class="header-left">
+          <span class="page-title">{{ route.meta?.title || '首页' }}</span>
+        </div>
+        <div class="header-right">
+          <div class="user-dropdown" @click="handleLogout">
+            <span class="user-avatar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </span>
+            <span class="user-name">{{ userNickname }}</span>
+            <span class="logout-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+            </span>
+          </div>
+        </div>
+      </header>
+
+      <main class="content">
+        <router-view v-slot="{ Component }">
+          <transition name="fade" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
+      </main>
+
+      <footer class="footer">
+        <span>Sea Admin &copy; {{ new Date().getFullYear() }}</span>
+      </footer>
+    </div>
+  </div>
 </template>
 
 <style scoped lang="scss">
-.app-layout {
+.layout {
+  display: flex;
   min-height: 100vh;
+  background: #fafafa;
+}
+
+.sidebar {
+  width: 220px;
+  background: #fff;
+  border-right: 1px solid #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+  flex-shrink: 0;
+
+  &.collapsed {
+    width: 64px;
+  }
+}
+
+.sidebar-header {
+  height: 56px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .logo {
-  height: 48px;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--color-text-1);
-  border-bottom: 1px solid var(--color-border);
+  gap: 10px;
+  padding: 0 16px;
+  cursor: pointer;
 }
 
-.app-header {
+.logo-icon {
+  width: 28px;
+  height: 28px;
+  color: #1a1a1a;
+  flex-shrink: 0;
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.logo-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 12px 8px;
+  overflow-y: auto;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #666;
+  margin-bottom: 2px;
+
+  &:hover {
+    background: #f5f5f5;
+    color: #1a1a1a;
+  }
+
+  &.active {
+    background: #f5f5f5;
+    color: #1a1a1a;
+    font-weight: 500;
+  }
+
+  &.sub {
+    padding-left: 44px;
+  }
+}
+
+.nav-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg, ::v-deep svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  ::v-deep img {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.nav-text {
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.nav-group {
+  margin-bottom: 4px;
+}
+
+.nav-group-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.header {
+  height: 56px;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  background: var(--color-bg-2);
-  border-bottom: 1px solid var(--color-border);
 }
 
-.app-content {
-  margin: 16px 24px;
-  padding: 24px;
-  background: var(--color-bg-2);
-  border-radius: 4px;
-  min-height: calc(100vh - 180px);
+.page-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: #1a1a1a;
 }
 
-.app-footer {
-  text-align: center;
-  color: var(--color-text-3);
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.user-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #f5f5f5;
+  }
+}
+
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  color: #999;
+
+  svg {
+    width: 100%;
+    height: 2;
+  }
+}
+
+.user-name {
   font-size: 13px;
+  color: #333;
+}
+
+.logout-icon {
+  width: 16px;
+  height: 16px;
+  color: #999;
+  margin-left: 4px;
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.content {
+  flex: 1;
+  padding: 24px;
+  min-height: 0;
+}
+
+.footer {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #bfbfbf;
+  border-top: 1px solid #f0f0f0;
+  background: #fff;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.fade-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
 }
 </style>

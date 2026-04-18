@@ -1,0 +1,58 @@
+import request from '@/utils/request'
+import type { ApiResponse, PageResult, SysUser, SysUserQuery, SysUserDTO } from '@/types'
+
+/**
+ * 获取用户列表
+ */
+export function getUserList(params: SysUserQuery): Promise<ApiResponse<PageResult<SysUser>>> {
+  return request.get('/system/user', { params })
+}
+
+/**
+ * 获取用户详情
+ */
+export function getUser(userId: number): Promise<ApiResponse<SysUser>> {
+  return request.get(`/system/user/${userId}`)
+}
+
+/**
+ * 新增用户
+ */
+export function addUser(data: SysUserDTO): Promise<ApiResponse<void>> {
+  return request.post('/system/user', data)
+}
+
+/**
+ * 修改用户
+ */
+export function updateUser(data: SysUserDTO): Promise<ApiResponse<void>> {
+  return request.put('/system/user', data)
+}
+
+/**
+ * 删除用户
+ */
+export function deleteUser(userId: number): Promise<ApiResponse<void>> {
+  return request.delete(`/system/user/${userId}`)
+}
+
+/**
+ * 修改用户状态
+ */
+export function changeUserStatus(userId: number, status: number): Promise<ApiResponse<void>> {
+  return request.put('/system/user/changeStatus', null, { params: { userId, status } })
+}
+
+/**
+ * 重置用户密码
+ */
+export function resetUserPwd(userId: number, password: string): Promise<ApiResponse<void>> {
+  return request.put('/system/user/resetPwd', null, { params: { userId, password } })
+}
+
+/**
+ * 获取角色下拉列表（用于用户表单）
+ */
+export function getRoleOptions(): Promise<ApiResponse<{ roleId: number; roleName: string }[]>> {
+  return request.get('/system/role/options')
+}

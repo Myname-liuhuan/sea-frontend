@@ -20,6 +20,24 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/pages/about/index.vue'),
         meta: { title: '关于' },
       },
+      {
+        path: 'user',
+        name: 'User',
+        component: () => import('@/pages/user/index.vue'),
+        meta: { title: '用户管理' },
+      },
+      {
+        path: 'role',
+        name: 'Role',
+        component: () => import('@/pages/role/index.vue'),
+        meta: { title: '角色管理' },
+      },
+      {
+        path: 'menu',
+        name: 'Menu',
+        component: () => import('@/pages/menu/index.vue'),
+        meta: { title: '菜单管理' },
+      },
     ],
   },
   {

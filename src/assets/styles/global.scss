@@ -1,17 +1,260 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
+
+:root {
+  /* 主色调 - 精炼极简 */
+  --color-primary: #1a1a1a;
+  --color-primary-light: #333333;
+  --color-primary-rgb: 26, 26, 26;
+
+  /* 背景色 */
+  --bg-primary: #fafafa;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f5f5f5;
+  --bg-elevated: #ffffff;
+
+  /* 边框和分割线 */
+  --border-color: #e8e8e8;
+  --border-light: #f0f0f0;
+
+  /* 文字色 */
+  --text-primary: #1a1a1a;
+  --text-secondary: #666666;
+  --text-tertiary: #999999;
+  --text-placeholder: #bfbfbf;
+
+  /* 功能色 */
+  --color-success: #52c41a;
+  --color-warning: #faad14;
+  --color-danger: #ff4d4f;
+  --color-info: #1890ff;
+
+  /* 间距 */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
+  /* 圆角 */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 4px 24px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 8px 32px rgba(0, 0, 0, 0.12);
+
+  /* 过渡 */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.2s ease;
+  --transition-slow: 0.3s ease;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 html,
 body {
   margin: 0;
   padding: 0;
-  font-family:
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    sans-serif;
+  font-family: 'DM Sans', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #app {
   min-height: 100vh;
+}
+
+/* 全局标题样式 */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+h1 { font-size: 28px; }
+h2 { font-size: 22px; }
+h3 { font-size: 18px; }
+h4 { font-size: 16px; }
+
+/* 全局链接 */
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--color-primary-light);
+}
+
+/* 滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d9d9d9;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #bfbfbf;
+}
+
+/* 选中文字样式 */
+::selection {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* Arco Design 组件覆盖 */
+.arco-layout {
+  background: var(--bg-primary) !important;
+}
+
+.arco-card {
+  border-radius: var(--radius-lg) !important;
+  border: 1px solid var(--border-light) !important;
+  box-shadow: var(--shadow-sm) !important;
+  background: var(--bg-elevated) !important;
+}
+
+.arco-card:hover {
+  box-shadow: var(--shadow-md) !important;
+}
+
+.arco-btn {
+  border-radius: var(--radius-sm) !important;
+  font-weight: 500 !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.arco-btn-primary {
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+.arco-btn-primary:hover {
+  background: var(--color-primary-light) !important;
+  border-color: var(--color-primary-light) !important;
+}
+
+.arco-input,
+.arco-textarea {
+  border-radius: var(--radius-sm) !important;
+}
+
+.arco-select-view,
+.arco-picker {
+  border-radius: var(--radius-sm) !important;
+}
+
+.arco-table {
+  font-size: 13px !important;
+}
+
+.arco-table-th {
+  font-weight: 600 !important;
+  color: var(--text-secondary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
+.arco-table-td {
+  border-bottom: 1px solid var(--border-light) !important;
+}
+
+.arco-menu {
+  border-right: none !important;
+  background: transparent !important;
+}
+
+.arco-menu-item {
+  border-radius: var(--radius-sm) !important;
+  margin: 4px 8px !important;
+}
+
+.arco-menu-item:hover {
+  background: var(--bg-tertiary) !important;
+}
+
+.arco-menu-item-selected {
+  background: var(--bg-tertiary) !important;
+}
+
+.arco-tag {
+  border-radius: var(--radius-sm) !important;
+  font-weight: 500 !important;
+}
+
+.arco-form-item-label > label {
+  color: var(--text-secondary) !important;
+  font-weight: 500 !important;
+}
+
+.arco-modal {
+  border-radius: var(--radius-lg) !important;
+}
+
+.arco-modal-header {
+  border-bottom: 1px solid var(--border-light) !important;
+  padding: var(--space-lg) !important;
+}
+
+.arco-modal-body {
+  padding: var(--space-lg) !important;
+}
+
+.arco-modal-footer {
+  border-top: 1px solid var(--border-light) !important;
+  padding: var(--space-md) var(--space-lg) !important;
+}
+
+/* 页面进入动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: fadeIn var(--transition-slow) ease-out;
+}
+
+/* 工具类 */
+.page-container {
+  padding: var(--space-lg);
+  animation: fadeIn var(--transition-slow) ease-out;
+}
+
+.card-container {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-base);
+}
+
+.card-container:hover {
+  box-shadow: var(--shadow-md);
 }
