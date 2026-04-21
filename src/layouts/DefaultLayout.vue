@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore, useMenuStore } from '@/stores'
-import { getMyMenuTree } from '@/api/auth'
+import { getMyMenuTree } from '@/api/menu'
 import type { SysMenu } from '@/types'
 
 const router = useRouter()
@@ -257,12 +257,12 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
 
-  svg, ::v-deep svg {
+  svg, :deep(svg) {
     width: 100%;
     height: 100%;
   }
 
-  ::v-deep img {
+  :deep(img) {
     width: 18px;
     height: 18px;
   }

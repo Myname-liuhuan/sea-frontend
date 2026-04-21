@@ -4,7 +4,9 @@ import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { useUserStore } from '@/stores'
 import { useMenuStore } from '@/stores/menu'
-import { login, getLoginUser, getMyMenuTree } from '@/api/auth'
+import { login } from '@/api/auth'
+import { getLoginUser } from '@/api/user'
+import { getMyMenuTree } from '@/api/menu'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -29,9 +31,9 @@ async function handleLogin() {
       const { accessToken } = loginRes.data
       userStore.setToken(accessToken)
 
-      const userRes = await getLoginUser()
+      const userRes = await getLoginUser(form.username)
       if (userRes.code === 200) {
-        userStore.setUserInfo(userRes.data as Record<string, unknown>)
+        userStore.setUserInfo(userRes.data as unknown as Record<string, unknown>)
       }
 
       const menuRes = await getMyMenuTree()
