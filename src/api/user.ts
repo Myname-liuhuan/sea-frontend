@@ -5,61 +5,61 @@ import type { ApiResponse, PageResult, SysUser, SysUserQuery, SysUserDTO, LoginU
  * 获取当前登录用户信息
  */
 export function getLoginUser(username: string): Promise<ApiResponse<LoginUser>> {
-  return request.get('/api/system/sysUser/getLoginUser', { params: { username } })
+  return request.get('/system/sysUser/getLoginUser', { params: { username } })
 }
 
 /**
  * 获取用户列表
  */
 export function getUserList(params: SysUserQuery): Promise<ApiResponse<PageResult<SysUser>>> {
-  return request.get('/api/system/sysUser/list', { params })
+  return request.get('/system/sysUser/list', { params })
 }
 
 /**
  * 获取用户详情
  */
 export function getUser(userId: number): Promise<ApiResponse<SysUser>> {
-  return request.get(`/api/system/sysUser/${userId}`)
+  return request.get(`/system/sysUser/${userId}`)
 }
 
 /**
  * 新增用户
  */
 export function addUser(data: SysUserDTO): Promise<ApiResponse<void>> {
-  return request.post('/api/system/sysUser', data)
+  return request.post('/system/sysUser', data)
 }
 
 /**
  * 修改用户
  */
 export function updateUser(data: SysUserDTO): Promise<ApiResponse<void>> {
-  return request.put('/api/system/sysUser', data)
+  return request.put('/system/sysUser', data)
 }
 
 /**
  * 删除用户
  */
 export function deleteUser(userId: number): Promise<ApiResponse<void>> {
-  return request.delete(`/api/system/sysUser/${userId}`)
+  return request.delete(`/system/sysUser/${userId}`)
 }
 
 /**
  * 修改用户状态
  */
 export function changeUserStatus(userId: number, status: number): Promise<ApiResponse<void>> {
-  return request.put('/api/system/sysUser/changeStatus', null, { params: { userId, status } })
+  return request.put('/system/sysUser/changeStatus', null, { params: { userId, status } })
 }
 
 /**
  * 重置用户密码
  */
 export function resetUserPwd(userId: number, password: string): Promise<ApiResponse<void>> {
-  return request.put('/api/system/sysUser/resetPwd', null, { params: { userId, password } })
+  return request.put('/system/sysUser/resetPwd', null, { params: { userId, password } })
 }
 
 /**
  * 获取角色下拉列表（用于用户表单）
  */
 export function getRoleOptions(): Promise<ApiResponse<{ roleId: number; roleName: string }[]>> {
-  return request.get('/api/system/role/options')
+  return request.get('/system/role/options')
 }
