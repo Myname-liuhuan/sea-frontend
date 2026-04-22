@@ -46,7 +46,7 @@ async function fetchMenuTree() {
     const res = await getAllMenuTree()
     if (res.code === 200) {
       menuTree.value = res.data
-      expandedKeys.value = res.data.map((m) => m.menuId)
+      expandedKeys.value = res.data.map((m) => m.id)
     }
   } finally {
     loading.value = false
@@ -90,7 +90,7 @@ function openAddModal(parentId = 0) {
 function openEditModal(row: SysMenu) {
   isEdit.value = true
   Object.assign(formData, {
-    menuId: row.menuId,
+    menuId: row.id,
     menuName: row.menuName,
     parentId: row.parentId,
     path: row.path,
@@ -133,7 +133,7 @@ function handleDelete(row: SysMenu) {
     okText: '确定',
     cancelText: '取消',
     async onOk() {
-      const res = await deleteMenu(row.menuId)
+      const res = await deleteMenu(row.id)
       if (res.code === 200) {
         Message.success('删除成功')
         fetchMenuTree()
@@ -177,7 +177,7 @@ onMounted(() => {
         <a-tree
           v-model:expanded-keys="expandedKeys"
           :data="menuTree"
-          :field-names="{ key: 'menuId', title: 'menuName', children: 'children' }"
+          :field-names="{ key: 'id', title: 'menuName', children: 'children' }"
           block-node
         >
           <template #title="{ data }">
@@ -187,7 +187,7 @@ onMounted(() => {
                   <component :is="data.icon" />
                 </span>
                 <span class="menu-name">{{ data.menuName }}</span>
-                <span class="menu-type-tag" :class="data.menuType">
+                <span class="menu-type-tag" :class="'type-' + data.menuType">
                   {{ formatMenuType(data.menuType) }}
                 </span>
               </div>
@@ -199,7 +199,7 @@ onMounted(() => {
                 </span>
               </div>
               <div class="menu-actions">
-                <button class="action-btn" @click.stop="openAddModal(data.menuId)">新增</button>
+                <button class="action-btn" @click.stop="openAddModal(data.id)">新增</button>
                 <button class="action-btn" @click.stop="openEditModal(data)">编辑</button>
                 <button class="action-btn danger" @click.stop="handleDelete(data)">删除</button>
               </div>
@@ -413,15 +413,15 @@ onMounted(() => {
   border-radius: 4px;
   font-weight: 500;
 
-  &.0 {
+  &.type-0 {
     background: #e6f7ff;
     color: #1890ff;
   }
-  &.1 {
+  &.type-1 {
     background: #f6ffed;
     color: #52c41a;
   }
-  &.2 {
+  &.type-2 {
     background: #fff7e6;
     color: #fa8c16;
   }

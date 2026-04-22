@@ -12,49 +12,49 @@ export function getLoginUser(username: string): Promise<ApiResponse<LoginUser>> 
  * 获取用户列表
  */
 export function getUserList(params: SysUserQuery): Promise<ApiResponse<PageResult<SysUser>>> {
-  return request.get('/api/system/user', { params })
+  return request.get('/api/system/sysUser/list', { params })
 }
 
 /**
  * 获取用户详情
  */
 export function getUser(userId: number): Promise<ApiResponse<SysUser>> {
-  return request.get(`/api/system/user/${userId}`)
+  return request.get(`/api/system/sysUser/${userId}`)
 }
 
 /**
  * 新增用户
  */
 export function addUser(data: SysUserDTO): Promise<ApiResponse<void>> {
-  return request.post('/api/system/user', data)
+  return request.post('/api/system/sysUser', data)
 }
 
 /**
  * 修改用户
  */
 export function updateUser(data: SysUserDTO): Promise<ApiResponse<void>> {
-  return request.put('/api/system/user', data)
+  return request.put('/api/system/sysUser', data)
 }
 
 /**
  * 删除用户
  */
 export function deleteUser(userId: number): Promise<ApiResponse<void>> {
-  return request.delete(`/api/system/user/${userId}`)
+  return request.delete(`/api/system/sysUser/${userId}`)
 }
 
 /**
  * 修改用户状态
  */
 export function changeUserStatus(userId: number, status: number): Promise<ApiResponse<void>> {
-  return request.put('/api/system/user/changeStatus', null, { params: { userId, status } })
+  return request.put('/api/system/sysUser/changeStatus', null, { params: { userId, status } })
 }
 
 /**
  * 重置用户密码
  */
 export function resetUserPwd(userId: number, password: string): Promise<ApiResponse<void>> {
-  return request.put('/api/system/user/resetPwd', null, { params: { userId, password } })
+  return request.put('/api/system/sysUser/resetPwd', null, { params: { userId, password } })
 }
 
 /**

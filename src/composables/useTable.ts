@@ -33,10 +33,10 @@ export function useTable<T, P extends PageQuery = PageQuery>(
       } as P
 
       const res = await api(queryParams)
-      dataSource.value = res.rows
-      pagination.total = res.total
-      pagination.current = res.pageNum
-      pagination.pageSize = res.pageSize
+      dataSource.value = res.data.rows
+      pagination.total = res.data.total
+      pagination.current = res.data.pageNum
+      pagination.pageSize = res.data.pageSize
     } finally {
       loading.value = false
     }

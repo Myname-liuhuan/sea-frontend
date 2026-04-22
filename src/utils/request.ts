@@ -1,6 +1,8 @@
 import axios from 'axios'
 import type { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
 import { Message } from '@arco-design/web-vue'
+import router from '@/router'
+import { useUserStore } from '@/stores/user'
 
 const service: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
@@ -39,7 +41,13 @@ service.interceptors.response.use(
       404: '请求资源不存在',
       500: '服务器内部错误',
     }
-    Message.error(messages[status] || `请求失败: ${error.message}`)
+    if (status === 401) {
+      const userStore = useUserStore()
+      userStore.clearToken()
+      router.push({ name: 'Login' })
+    } else {
+      Message.error(messages[status] || `请求失败: ${error.message}`)
+    }
     return Promise.reject(error)
   }
 )

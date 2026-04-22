@@ -3,7 +3,9 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore, useMenuStore } from '@/stores'
 import { getMyMenuTree } from '@/api/menu'
+import { Modal } from '@arco-design/web-vue'
 import type { SysMenu } from '@/types'
+import { resolveIcon } from '@/utils/icon'
 
 const router = useRouter()
 const route = useRoute()
@@ -18,13 +20,16 @@ const menuItems = computed(() => {
 
 function buildMenuItems(menus: SysMenu[]) {
   return menus
-    .filter((m) => m.menuType !== 2)
-    .map((menu) => ({
-      key: menu.path || '/',
-      title: menu.menuName,
-      icon: menu.icon,
-      children: menu.children ? buildMenuItems(menu.children) : undefined,
-    }))
+    .filter((m) => String(m.menuType) !== '3')
+    .map((menu) => {
+      const key = menu.path?.startsWith('/') ? menu.path : `/${menu.path}`
+      return {
+        key,
+        title: menu.menuName,
+        icon: menu.icon,
+        children: menu.children ? buildMenuItems(menu.children) : undefined,
+      }
+    })
 }
 
 const selectedKey = computed(() => route.path)
@@ -47,9 +52,17 @@ function handleMenuClick(key: string) {
 }
 
 function handleLogout() {
-  userStore.clearToken()
-  menuStore.clearMenuTree()
-  router.push('/login')
+  Modal.confirm({
+    title: '确认退出',
+    content: '确定要退出登录吗？',
+    okText: '确定',
+    cancelText: '取消',
+    onOk() {
+      userStore.clearToken()
+      menuStore.clearMenuTree()
+      router.push('/login')
+    },
+  })
 }
 
 const userNickname = computed(() => {
@@ -96,13 +109,25 @@ onMounted(() => {
             :class="{ active: selectedKey === menu.key }"
             @click="handleMenuClick(menu.key)"
           >
-            <span class="nav-icon" v-html="menu.icon"></span>
+            <span class="nav-icon">
+              <component :is="resolveIcon(menu.icon)" v-if="resolveIcon(menu.icon)" />
+              <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 2v4m0 12v4M2 12h4m12 0h4"/>
+              </svg>
+            </span>
             <span v-if="!collapsed" class="nav-text">{{ menu.title }}</span>
           </div>
 
           <div v-else class="nav-group" :class="{ collapsed }">
             <div class="nav-group-title" v-if="!collapsed">
-              <span class="nav-icon" v-html="menu.icon"></span>
+              <span class="nav-icon">
+                <component :is="resolveIcon(menu.icon)" v-if="resolveIcon(menu.icon)" />
+                <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M12 2v4m0 12v4M2 12h4m12 0h4"/>
+                </svg>
+              </span>
               <span class="nav-text">{{ menu.title }}</span>
             </div>
             <div
@@ -112,6 +137,12 @@ onMounted(() => {
               :class="{ active: selectedKey === child.key }"
               @click="handleMenuClick(child.key)"
             >
+              <span class="nav-icon">
+                <component :is="resolveIcon(child.icon)" v-if="resolveIcon(child.icon)" />
+                <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </span>
               <span v-if="!collapsed" class="nav-text">{{ child.title }}</span>
             </div>
           </div>
@@ -148,7 +179,7 @@ onMounted(() => {
       <main class="content">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
-            <component :is="Component" />
+            <component :is="Component" :key="route.path" />
           </transition>
         </router-view>
       </main>
