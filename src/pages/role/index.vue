@@ -11,7 +11,7 @@ import {
   getRoleMenus,
 } from '@/api/role'
 import { getAllMenuTree } from '@/api/menu'
-import { getUserList } from '@/api/user'
+import { getUserPage } from '@/api/user'
 import type { SysRole, SysRoleQuery, SysRoleDTO, SysMenu } from '@/types'
 import { Message, Modal } from '@arco-design/web-vue'
 
@@ -140,7 +140,7 @@ async function openAssignUsersModal(row: SysRole) {
   userModalVisible.value = true
 
   try {
-    const usersRes = await getUserList({ pageNum: 1, pageSize: 999 })
+    const usersRes = await getUserPage({ pageNum: 1, pageSize: 10 })
     if (usersRes.code === 200) {
       allUsers.value = usersRes.data.rows.map((u) => ({
         userId: u.userId,

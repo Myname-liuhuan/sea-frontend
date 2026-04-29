@@ -11,8 +11,15 @@ export function getLoginUser(username: string): Promise<ApiResponse<LoginUser>> 
 /**
  * 获取用户列表
  */
-export function getUserList(params: SysUserQuery): Promise<ApiResponse<PageResult<SysUser>>> {
+export function getUserList(params: SysUserQuery): Promise<ApiResponse<SysUser[]>> {
   return request.get('/system/sysUser/list', { params })
+}
+
+/**
+ * 分页获取用户列表
+ */
+export function getUserPage(params: SysUserQuery): Promise<ApiResponse<PageResult<SysUser>>> {
+  return request.get('/system/sysUser/page', { params })
 }
 
 /**

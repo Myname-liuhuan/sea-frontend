@@ -50,44 +50,45 @@ export interface LoginUser {
 
 // ========== 用户类型 ==========
 
-/** 用户实体 */
+/** 用户视图对象 (对应后端 SysUserVO) */
 export interface SysUser {
-  userId: number
+  id: number
   username: string
-  nickname: string
-  avatar?: string
   email?: string
-  phone?: string
-  sex?: number
-  status?: number
-  deptId?: number
-  deptName?: string
-  roleIds?: number[]
-  roleNames?: string
+  mobile?: string
+  avatarUrl?: string
+  profile?: string
+  isBanned?: string
+  bannedUntil?: string
   createTime?: string
   updateTime?: string
+  createBy?: number
+  updateBy?: number
+  delFlag?: number
 }
 
-/** 用户查询参数 */
-export interface SysUserQuery extends PageQuery {
+/** 用户查询参数 (对应后端 SysUserQueryParam) */
+export interface SysUserQuery {
+  pageNum?: number
+  pageSize?: number
   username?: string
-  phone?: string
-  status?: number
-  deptId?: number
+  email?: string
+  mobile?: string
+  avatarUrl?: string
+  profile?: string
+  createTimeStart?: string
+  createTimeEnd?: string
 }
 
-/** 用户表单数据 */
+/** 用户表单数据 (对应后端 SysUserDTO) */
 export interface SysUserDTO {
-  userId?: number
+  id?: number
   username: string
-  nickname: string
+  email: string
+  mobile?: string
   password?: string
-  email?: string
-  phone?: string
-  sex?: number
-  status?: number
-  deptId?: number
-  roleIds: number[]
+  avatarUrl?: string
+  profile?: string
 }
 
 // ========== 角色类型 ==========

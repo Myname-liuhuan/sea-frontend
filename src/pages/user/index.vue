@@ -1,18 +1,17 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { useTable } from '@/composables/useTable'
-import { getUserList, addUser, updateUser, deleteUser, getRoleOptions } from '@/api/user'
+import { getUserPage, addUser, updateUser, deleteUser, getRoleOptions } from '@/api/user'
 import type { SysUser, SysUserQuery, SysUserDTO } from '@/types'
 import { Message, Modal } from '@arco-design/web-vue'
 
 const searchForm = reactive({
   username: '',
-  phone: '',
-  status: undefined as number | undefined,
+  mobile: '',
 })
 
 const { loading, dataSource, pagination, fetchData, onPageChange, onPageSizeChange } = useTable<SysUser, SysUserQuery>({
-  api: getUserList,
+  api: getUserPage,
   defaultParams: { pageSize: 10 },
 })
 
@@ -22,29 +21,14 @@ const isEdit = ref(false)
 const formRef = ref()
 
 const formData = reactive<SysUserDTO>({
+  id: undefined,
   username: '',
-  nickname: '',
   password: '',
   email: '',
-  phone: '',
-  sex: 0,
-  status: 1,
-  deptId: 0,
-  roleIds: [],
+  mobile: '',
 })
 
 const roleOptions = ref<{ label: string; value: number }[]>([])
-
-const statusOptions = [
-  { label: '正常', value: 1 },
-  { label: '停用', value: 0 },
-]
-
-const sexOptions = [
-  { label: '男', value: 1 },
-  { label: '女', value: 0 },
-  { label: '未知', value: 2 },
-]
 
 async function loadRoleOptions() {
   const res = await getRoleOptions()
@@ -57,31 +41,24 @@ function handleSearch() {
   pagination.current = 1
   fetchData({
     username: searchForm.username || undefined,
-    phone: searchForm.phone || undefined,
-    status: searchForm.status,
+    mobile: searchForm.mobile || undefined,
   } as Partial<SysUserQuery>)
 }
 
 function handleReset() {
   searchForm.username = ''
-  searchForm.phone = ''
-  searchForm.status = undefined
+  searchForm.mobile = ''
   handleSearch()
 }
 
 function openAddModal() {
   isEdit.value = false
   Object.assign(formData, {
-    userId: undefined,
+    id: undefined,
     username: '',
-    nickname: '',
     password: '',
     email: '',
-    phone: '',
-    sex: 0,
-    status: 1,
-    deptId: 0,
-    roleIds: [],
+    mobile: '',
   })
   loadRoleOptions()
   modalVisible.value = true
@@ -90,16 +67,11 @@ function openAddModal() {
 function openEditModal(row: SysUser) {
   isEdit.value = true
   Object.assign(formData, {
-    userId: row.userId,
+    id: row.id,
     username: row.username,
-    nickname: row.nickname,
     password: '',
     email: row.email || '',
-    phone: row.phone || '',
-    sex: row.sex || 0,
-    status: row.status || 1,
-    deptId: row.deptId || 0,
-    roleIds: row.roleIds || [],
+    mobile: row.mobile || '',
   })
   loadRoleOptions()
   modalVisible.value = true
@@ -138,14 +110,6 @@ function handleDelete(row: SysUser) {
     },
   })
 }
-
-function formatStatus(status: number) {
-  return status === 1 ? '正常' : '停用'
-}
-
-function formatSex(sex: number) {
-  return sexOptions.find((s) => s.value === sex)?.label || '未知'
-}
 </script>
 
 <template>
@@ -159,14 +123,7 @@ function formatSex(sex: number) {
         </div>
         <div class="form-item">
           <label>手机号</label>
-          <input v-model="searchForm.phone" placeholder="请输入手机号" class="search-input" @keyup.enter="handleSearch" />
-        </div>
-        <div class="form-item">
-          <label>状态</label>
-          <select v-model="searchForm.status" class="search-select">
-            <option :value="undefined">全部</option>
-            <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-          </select>
+          <input v-model="searchForm.mobile" placeholder="请输入手机号" class="search-input" @keyup.enter="handleSearch" />
         </div>
         <div class="form-actions">
           <button class="btn btn-primary" @click="handleSearch">
@@ -202,11 +159,10 @@ function formatSex(sex: number) {
         <thead>
           <tr>
             <th>用户名</th>
-            <th>昵称</th>
-            <th>性别</th>
+            <th>邮箱</th>
             <th>手机号</th>
+            <th>头像</th>
             <th>状态</th>
-            <th>角色</th>
             <th>创建时间</th>
             <th>操作</th>
           </tr>
@@ -222,17 +178,12 @@ function formatSex(sex: number) {
               <div class="empty-state">暂无数据</div>
             </td>
           </tr>
-          <tr v-for="row in dataSource" :key="row.userId">
+          <tr v-for="row in dataSource" :key="row.id">
             <td>{{ row.username }}</td>
-            <td>{{ row.nickname }}</td>
-            <td>{{ formatSex(row.sex) }}</td>
-            <td>{{ row.phone || '-' }}</td>
-            <td>
-              <span class="status-tag" :class="row.status === 1 ? 'success' : 'danger'">
-                {{ formatStatus(row.status) }}
-              </span>
-            </td>
-            <td>{{ row.roleNames || '-' }}</td>
+            <td>{{ row.email || '-' }}</td>
+            <td>{{ row.mobile || '-' }}</td>
+            <td>{{ row.avatarUrl || '-' }}</td>
+            <td>{{ row.isBanned === '1' ? '封禁' : '正常' }}</td>
             <td>{{ row.createTime }}</td>
             <td>
               <div class="table-actions">
@@ -277,38 +228,14 @@ function formatSex(sex: number) {
             <label>密码 <span class="required">*</span></label>
             <input v-model="formData.password" type="password" placeholder="请输入密码" class="form-input" />
           </div>
-          <div class="form-group">
-            <label>昵称 <span class="required">*</span></label>
-            <input v-model="formData.nickname" placeholder="请输入昵称" class="form-input" />
-          </div>
           <div class="form-row">
-            <div class="form-group">
-              <label>手机号</label>
-              <input v-model="formData.phone" placeholder="请输入手机号" class="form-input" />
-            </div>
             <div class="form-group">
               <label>邮箱</label>
               <input v-model="formData.email" placeholder="请输入邮箱" class="form-input" />
             </div>
-          </div>
-          <div class="form-row">
             <div class="form-group">
-              <label>性别</label>
-              <div class="radio-group">
-                <label v-for="opt in sexOptions" :key="opt.value" class="radio-item">
-                  <input type="radio" :value="opt.value" v-model="formData.sex" />
-                  <span>{{ opt.label }}</span>
-                </label>
-              </div>
-            </div>
-            <div class="form-group">
-              <label>状态</label>
-              <div class="radio-group">
-                <label v-for="opt in statusOptions" :key="opt.value" class="radio-item">
-                  <input type="radio" :value="opt.value" v-model="formData.status" />
-                  <span>{{ opt.label }}</span>
-                </label>
-              </div>
+              <label>手机号</label>
+              <input v-model="formData.mobile" placeholder="请输入手机号" class="form-input" />
             </div>
           </div>
         </div>
