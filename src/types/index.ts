@@ -28,6 +28,7 @@ export interface PageResult<T> {
 export interface LoginDTO {
   username: string
   password: string
+  refreshToken?: string
 }
 
 /** 登录结果 */
@@ -39,13 +40,12 @@ export interface LoginResult {
 
 /** 登录用户信息 */
 export interface LoginUser {
-  userId: number
+  id: number
   username: string
-  nickname: string
-  avatar?: string
-  email?: string
-  phone?: string
+  password?: string
+  version?: number
   roles: string[]
+  perms: string[]
 }
 
 // ========== 用户类型 ==========
@@ -95,31 +95,34 @@ export interface SysUserDTO {
 
 /** 角色实体 */
 export interface SysRole {
-  roleId: number
+  id: number
   roleName: string
-  roleKey: string
-  roleSort: number
+  roleCode: string
+  roleDesc?: string
   dataScope?: string
-  status: number
+  status: string
   createTime?: string
   updateTime?: string
+  createBy?: number
+  updateBy?: number
+  delFlag?: number
 }
 
 /** 角色查询参数 */
 export interface SysRoleQuery extends PageQuery {
   roleName?: string
-  roleKey?: string
-  status?: number
+  roleCode?: string
+  status?: string
 }
 
 /** 角色表单数据 */
 export interface SysRoleDTO {
-  roleId?: number
+  id?: number
   roleName: string
-  roleKey: string
-  roleSort: number
-  status: number
+  roleCode: string
+  roleDesc?: string
   dataScope?: string
+  status?: string
 }
 
 /** 分配用户请求 */
@@ -136,46 +139,49 @@ export interface AssignMenusDTO {
 
 // ========== 菜单类型 ==========
 
-/** 菜单类型: 0=目录, 1=菜单, 2=按钮 */
-export type MenuType = 0 | 1 | 2
+/** 菜单类型: M=目录, C=菜单, F=按钮 */
+export type MenuType = 'M' | 'C' | 'F'
 
 /** 菜单实体 */
 export interface SysMenu {
-  menuId: number
-  menuName: string
+  id: number
   parentId: number
+  menuName: string
+  menuType: MenuType
   path: string
   component?: string
-  menuType: MenuType
-  visible: number
-  status: number
   perms?: string
   icon?: string
+  visible: string
+  status: string
   orderNum: number
   createTime?: string
   updateTime?: string
+  createBy?: number
+  updateBy?: number
+  delFlag?: number
   children?: SysMenu[]
 }
 
 /** 菜单查询参数 */
 export interface SysMenuQuery extends PageQuery {
   menuName?: string
-  visible?: number
-  status?: number
+  visible?: string
+  status?: string
 }
 
 /** 菜单表单数据 */
 export interface SysMenuDTO {
-  menuId?: number
-  menuName: string
+  id?: number
   parentId: number
+  menuName: string
+  menuType: MenuType
   path: string
   component?: string
-  menuType: MenuType
-  visible: number
-  status: number
   perms?: string
   icon?: string
+  visible?: string
+  status?: string
   orderNum: number
 }
 

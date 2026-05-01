@@ -33,14 +33,14 @@ export function getUser(userId: number): Promise<ApiResponse<SysUser>> {
  * 新增用户
  */
 export function addUser(data: SysUserDTO): Promise<ApiResponse<void>> {
-  return request.post('/system/sysUser', data)
+  return request.post('/system/sysUser/add', data)
 }
 
 /**
  * 修改用户
  */
 export function updateUser(data: SysUserDTO): Promise<ApiResponse<void>> {
-  return request.put('/system/sysUser', data)
+  return request.post('/system/sysUser/update', data)
 }
 
 /**
@@ -53,7 +53,7 @@ export function deleteUser(userId: number): Promise<ApiResponse<void>> {
 /**
  * 修改用户状态
  */
-export function changeUserStatus(userId: number, status: number): Promise<ApiResponse<void>> {
+export function changeUserStatus(userId: number, status: string): Promise<ApiResponse<void>> {
   return request.put('/system/sysUser/changeStatus', null, { params: { userId, status } })
 }
 

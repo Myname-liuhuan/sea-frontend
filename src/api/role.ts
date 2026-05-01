@@ -5,63 +5,69 @@ import type { ApiResponse, PageResult, SysRole, SysRoleQuery, SysRoleDTO, Option
  * 获取角色列表
  */
 export function getRoleList(params: SysRoleQuery): Promise<ApiResponse<PageResult<SysRole>>> {
-  return request.get('/system/role', { params })
+  return request.get('/system/sysRole', { params })
 }
 
 /**
  * 获取角色详情
  */
 export function getRole(roleId: number): Promise<ApiResponse<SysRole>> {
-  return request.get(`/system/role/${roleId}`)
+  return request.get(`/system/sysRole/${roleId}`)
 }
 
 /**
  * 新增角色
  */
 export function addRole(data: SysRoleDTO): Promise<ApiResponse<void>> {
-  return request.post('/system/role', data)
+  return request.post('/system/sysRole/add', data)
 }
 
 /**
  * 修改角色
  */
 export function updateRole(data: SysRoleDTO): Promise<ApiResponse<void>> {
-  return request.put('/system/role', data)
+  return request.post('/system/sysRole/edit', data)
 }
 
 /**
  * 删除角色
  */
 export function deleteRole(roleId: number): Promise<ApiResponse<void>> {
-  return request.delete(`/system/role/${roleId}`)
+  return request.delete(`/system/sysRole/${roleId}`)
 }
 
 /**
  * 分配用户给角色
  */
 export function assignUsers(data: { roleId: number; userIds: number[] }): Promise<ApiResponse<void>> {
-  return request.put('/system/role/assignUsers', data)
+  return request.post('/system/sysRole/editRoleUserRelation', {
+    roleId: data.roleId,
+    userIdList: data.userIds
+  })
 }
 
 /**
  * 获取角色已分配的用户ID列表
  */
 export function getRoleUsers(roleId: number): Promise<ApiResponse<number[]>> {
-  return request.get(`/system/role/${roleId}/users`)
+  return request.get(`/system/sysRole/${roleId}/users`)
 }
 
 /**
  * 分配菜单权限给角色
  */
 export function assignMenus(data: { roleId: number; menuIds: number[] }): Promise<ApiResponse<void>> {
-  return request.put('/system/role/assignMenus', data)
+  return request.post('/system/sysRole/editRoleMenuRelation', {
+    roleId: data.roleId,
+    menuIdList: data.menuIds
+  })
 }
 
 /**
  * 获取角色已分配的菜单ID列表
  */
 export function getRoleMenus(roleId: number): Promise<ApiResponse<number[]>> {
-  return request.get(`/system/role/${roleId}/menus`)
+  return request.get(`/system/sysRole/${roleId}/menus`)
 }
 
 /**
