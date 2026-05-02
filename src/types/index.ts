@@ -113,6 +113,8 @@ export interface SysRoleQuery extends PageQuery {
   roleName?: string
   roleCode?: string
   status?: string
+  createTimeStart?: string
+  createTimeEnd?: string
 }
 
 /** 角色表单数据 */

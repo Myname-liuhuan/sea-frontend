@@ -5,10 +5,8 @@ import {
   getRoleList,
   addRole,
   updateRole,
-  deleteRole,
-  getRoleUsers,
-  assignMenus,
-  getRoleMenus,
+  assignUsers,
+  getAllRoleList,
 } from '@/api/role'
 import { getAllMenuTree } from '@/api/menu'
 import { getUserPage } from '@/api/user'
@@ -17,8 +15,8 @@ import { Message, Modal } from '@arco-design/web-vue'
 
 const searchForm = reactive({
   roleName: '',
-  roleKey: '',
-  status: undefined as number | undefined,
+  roleCode: '',
+  status: undefined as string | undefined,
 })
 
 const { loading, dataSource, pagination, fetchData, onPageChange, onPageSizeChange } = useTable<SysRole, SysRoleQuery>({
@@ -33,22 +31,22 @@ const formRef = ref()
 
 const formData = reactive<SysRoleDTO>({
   roleName: '',
-  roleKey: '',
-  roleSort: 0,
-  status: 1,
+  roleCode: '',
+  roleDesc: '',
+  status: '1',
   dataScope: '1',
 })
 
 const statusOptions = [
-  { label: '正常', value: 1 },
-  { label: '停用', value: 0 },
+  { label: '正常', value: '1' },
+  { label: '停用', value: '0' },
 ]
 
 // 用户分配弹窗相关
 const userModalVisible = ref(false)
 const userModalLoading = ref(false)
 const userLoading = ref(false)
-const allUsers = ref<{ userId: number; username: string; nickname: string }[]>([])
+const allUsers = ref<{ id: number; username: string }[]>([])
 const selectedUserIds = ref<number[]>([])
 const currentRoleId = ref(0)
 
@@ -64,14 +62,14 @@ function handleSearch() {
   pagination.current = 1
   fetchData({
     roleName: searchForm.roleName || undefined,
-    roleKey: searchForm.roleKey || undefined,
+    roleCode: searchForm.roleCode || undefined,
     status: searchForm.status,
   } as Partial<SysRoleQuery>)
 }
 
 function handleReset() {
   searchForm.roleName = ''
-  searchForm.roleKey = ''
+  searchForm.roleCode = ''
   searchForm.status = undefined
   handleSearch()
 }
@@ -79,11 +77,11 @@ function handleReset() {
 function openAddModal() {
   isEdit.value = false
   Object.assign(formData, {
-    roleId: undefined,
+    id: undefined,
     roleName: '',
-    roleKey: '',
-    roleSort: 0,
-    status: 1,
+    roleCode: '',
+    roleDesc: '',
+    status: '1',
     dataScope: '1',
   })
   modalVisible.value = true
@@ -92,10 +90,10 @@ function openAddModal() {
 function openEditModal(row: SysRole) {
   isEdit.value = true
   Object.assign(formData, {
-    roleId: row.roleId,
+    id: row.id,
     roleName: row.roleName,
-    roleKey: row.roleKey,
-    roleSort: row.roleSort,
+    roleCode: row.roleCode,
+    roleDesc: row.roleDesc,
     status: row.status,
     dataScope: row.dataScope || '1',
   })
@@ -124,34 +122,25 @@ function handleDelete(row: SysRole) {
     okText: '确定',
     cancelText: '取消',
     async onOk() {
-      const res = await deleteRole(row.roleId)
-      if (res.code === 200) {
-        Message.success('删除成功')
-        fetchData()
-      }
+      // 后端没有删除接口，提示用户
+      Message.error('该接口后端未实现')
     },
   })
 }
 
 async function openAssignUsersModal(row: SysRole) {
-  currentRoleId.value = row.roleId
+  currentRoleId.value = row.id
   selectedUserIds.value = []
   userLoading.value = true
   userModalVisible.value = true
 
   try {
-    const usersRes = await getUserPage({ pageNum: 1, pageSize: 10 })
+    const usersRes = await getUserPage({ pageNum: 1, pageSize: 100 })
     if (usersRes.code === 200) {
       allUsers.value = usersRes.data.rows.map((u) => ({
-        userId: u.userId,
+        id: u.id,
         username: u.username,
-        nickname: u.nickname,
       }))
-    }
-
-    const roleUsersRes = await getRoleUsers(row.roleId)
-    if (roleUsersRes.code === 200) {
-      selectedUserIds.value = roleUsersRes.data
     }
   } finally {
     userLoading.value = false
@@ -159,18 +148,24 @@ async function openAssignUsersModal(row: SysRole) {
 }
 
 async function handleAssignUsers() {
+  if (!currentRoleId.value) return
   userModalLoading.value = true
   try {
-    // 调用分配用户接口
-    Message.success('分配成功')
-    userModalVisible.value = false
+    const res = await assignUsers({
+      roleId: currentRoleId.value,
+      userIds: selectedUserIds.value,
+    })
+    if (res.code === 200) {
+      Message.success('分配成功')
+      userModalVisible.value = false
+    }
   } finally {
     userModalLoading.value = false
   }
 }
 
 async function openAssignMenusModal(row: SysRole) {
-  currentMenuRoleId.value = row.roleId
+  currentMenuRoleId.value = row.id
   selectedMenuIds.value = []
   menuLoading.value = true
   menuModalVisible.value = true
@@ -180,17 +175,13 @@ async function openAssignMenusModal(row: SysRole) {
     if (menuRes.code === 200) {
       menuTree.value = menuRes.data
     }
-
-    const roleMenusRes = await getRoleMenus(row.roleId)
-    if (roleMenusRes.code === 200) {
-      selectedMenuIds.value = roleMenusRes.data
-    }
   } finally {
     menuLoading.value = false
   }
 }
 
 async function handleAssignMenus() {
+  if (!currentMenuRoleId.value) return
   menuModalLoading.value = true
   try {
     const res = await assignMenus({
@@ -206,8 +197,8 @@ async function handleAssignMenus() {
   }
 }
 
-function formatStatus(status: number) {
-  return status === 1 ? '正常' : '停用'
+function formatStatus(status: string) {
+  return status === '1' ? '正常' : '停用'
 }
 </script>
 
@@ -222,7 +213,7 @@ function formatStatus(status: number) {
         </div>
         <div class="form-item">
           <label>权限字符</label>
-          <input v-model="searchForm.roleKey" placeholder="请输入权限字符" class="search-input" />
+          <input v-model="searchForm.roleCode" placeholder="请输入权限字符" class="search-input" />
         </div>
         <div class="form-item">
           <label>状态</label>
@@ -254,7 +245,7 @@ function formatStatus(status: number) {
           <tr>
             <th>角色名称</th>
             <th>权限字符</th>
-            <th>排序</th>
+            <th>角色描述</th>
             <th>状态</th>
             <th>创建时间</th>
             <th>操作</th>
@@ -267,12 +258,12 @@ function formatStatus(status: number) {
           <tr v-else-if="!dataSource.length" class="empty-row">
             <td colspan="6"><div class="empty-state">暂无数据</div></td>
           </tr>
-          <tr v-for="row in dataSource" :key="row.roleId">
+          <tr v-for="row in dataSource" :key="row.id">
             <td>{{ row.roleName }}</td>
-            <td>{{ row.roleKey }}</td>
-            <td>{{ row.roleSort }}</td>
+            <td>{{ row.roleCode }}</td>
+            <td>{{ row.roleDesc || '-' }}</td>
             <td>
-              <span class="status-tag" :class="row.status === 1 ? 'success' : 'danger'">
+              <span class="status-tag" :class="row.status === '1' ? 'success' : 'danger'">
                 {{ formatStatus(row.status) }}
               </span>
             </td>
@@ -317,11 +308,11 @@ function formatStatus(status: number) {
           </div>
           <div class="form-group">
             <label>权限字符 <span class="required">*</span></label>
-            <input v-model="formData.roleKey" placeholder="请输入权限字符" class="form-input" />
+            <input v-model="formData.roleCode" placeholder="请输入权限字符" class="form-input" />
           </div>
           <div class="form-group">
-            <label>排序</label>
-            <input v-model.number="formData.roleSort" type="number" placeholder="请输入排序" class="form-input" />
+            <label>角色描述</label>
+            <input v-model="formData.roleDesc" placeholder="请输入角色描述" class="form-input" />
           </div>
           <div class="form-group">
             <label>状态</label>
@@ -351,9 +342,9 @@ function formatStatus(status: number) {
           <div v-if="userLoading" class="loading-text">加载中...</div>
           <template v-else>
             <div class="user-list">
-              <label v-for="user in allUsers" :key="user.userId" class="user-item">
-                <input type="checkbox" :value="user.userId" v-model="selectedUserIds" />
-                <span>{{ user.username }} ({{ user.nickname }})</span>
+              <label v-for="user in allUsers" :key="user.id" class="user-item">
+                <input type="checkbox" :value="user.id" v-model="selectedUserIds" />
+                <span>{{ user.username }}</span>
               </label>
             </div>
           </template>
@@ -379,7 +370,7 @@ function formatStatus(status: number) {
             <a-tree
               v-model:checked-keys="selectedMenuIds"
               :data="menuTree"
-              :field-names="{ key: 'menuId', title: 'menuName', children: 'children' }"
+              :field-names="{ key: 'id', title: 'menuName', children: 'children' }"
               multiple
               checkable
               :default-expand-all="true"

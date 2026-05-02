@@ -2,17 +2,17 @@ import request from '@/utils/request'
 import type { ApiResponse, PageResult, SysRole, SysRoleQuery, SysRoleDTO, Option } from '@/types'
 
 /**
- * 获取角色列表
+ * 获取角色分页列表
  */
 export function getRoleList(params: SysRoleQuery): Promise<ApiResponse<PageResult<SysRole>>> {
-  return request.get('/system/sysRole', { params })
+  return request.get('/system/sysRole/page', { params })
 }
 
 /**
- * 获取角色详情
+ * 获取角色列表（不分页）
  */
-export function getRole(roleId: number): Promise<ApiResponse<SysRole>> {
-  return request.get(`/system/sysRole/${roleId}`)
+export function getAllRoleList(params?: SysRoleQuery): Promise<ApiResponse<SysRole[]>> {
+  return request.get('/system/sysRole/list', { params })
 }
 
 /**
@@ -30,13 +30,6 @@ export function updateRole(data: SysRoleDTO): Promise<ApiResponse<void>> {
 }
 
 /**
- * 删除角色
- */
-export function deleteRole(roleId: number): Promise<ApiResponse<void>> {
-  return request.delete(`/system/sysRole/${roleId}`)
-}
-
-/**
  * 分配用户给角色
  */
 export function assignUsers(data: { roleId: number; userIds: number[] }): Promise<ApiResponse<void>> {
@@ -44,13 +37,6 @@ export function assignUsers(data: { roleId: number; userIds: number[] }): Promis
     roleId: data.roleId,
     userIdList: data.userIds
   })
-}
-
-/**
- * 获取角色已分配的用户ID列表
- */
-export function getRoleUsers(roleId: number): Promise<ApiResponse<number[]>> {
-  return request.get(`/system/sysRole/${roleId}/users`)
 }
 
 /**
@@ -64,15 +50,9 @@ export function assignMenus(data: { roleId: number; menuIds: number[] }): Promis
 }
 
 /**
- * 获取角色已分配的菜单ID列表
+ * 获取所有角色选项（用于下拉选择）
+ * 使用 /system/sysRole/list 接口获取角色列表
  */
-export function getRoleMenus(roleId: number): Promise<ApiResponse<number[]>> {
-  return request.get(`/system/sysRole/${roleId}/menus`)
-}
-
-/**
- * 获取所有角色选项（用于用户分配）
- */
-export function getAllRoleOptions(): Promise<ApiResponse<Option[]>> {
-  return request.get('/system/role/options')
+export function getAllRoleOptions(): Promise<ApiResponse<SysRole[]>> {
+  return request.get('/system/sysRole/list')
 }
