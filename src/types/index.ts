@@ -141,21 +141,21 @@ export interface AssignMenusDTO {
 
 // ========== 菜单类型 ==========
 
-/** 菜单类型: M=目录, C=菜单, F=按钮 */
-export type MenuType = 'M' | 'C' | 'F'
+/** 菜单类型: 1=目录, 2=菜单, 3=按钮 */
+export type MenuType = string
 
 /** 菜单实体 */
 export interface SysMenu {
   id: number
+  menuId: number
   parentId: number
   menuName: string
-  menuType: MenuType
+  menuType: string
   path: string
   component?: string
   perms?: string
   icon?: string
   visible: string
-  status: string
   orderNum: number
   createTime?: string
   updateTime?: string
@@ -177,13 +177,12 @@ export interface SysMenuDTO {
   id?: number
   parentId: number
   menuName: string
-  menuType: MenuType
+  menuType: string
   path: string
   component?: string
   perms?: string
   icon?: string
   visible?: string
-  status?: string
   orderNum: number
 }
 

@@ -12,40 +12,48 @@ const expandedKeys = ref<number[]>([])
 const modalVisible = ref(false)
 const modalLoading = ref(false)
 const isEdit = ref(false)
-const formRef = ref()
-
 const formData = reactive<SysMenuDTO>({
   menuName: '',
   parentId: 0,
   path: '',
   component: '',
-  menuType: 1,
-  visible: 0,
-  status: 1,
+  menuType: '2',
+  visible: '0',
   perms: '',
   icon: '',
   orderNum: 0,
 })
 
 const menuTypeOptions = [
-  { label: '目录', value: 0 },
-  { label: '菜单', value: 1 },
-  { label: '按钮', value: 2 },
+  { label: '目录', value: '1' },
+  { label: '菜单', value: '2' },
+  { label: '按钮', value: '3' },
 ]
 
 const statusOptions = [
-  { label: '显示', value: 0 },
-  { label: '隐藏', value: 1 },
+  { label: '显示', value: '0' },
+  { label: '隐藏', value: '1' },
 ]
 
 const menuOptions = ref<SysMenu[]>([])
+
+function removeIconField<T extends Record<string, any>>(obj: T): T {
+  if (!obj) return obj
+  const { icon, children, ...rest } = obj
+  const result = { ...rest } as T
+  if (children && Array.isArray(children)) {
+    (result as any).children = children.map(removeIconField)
+  }
+  return result
+}
 
 async function fetchMenuTree() {
   loading.value = true
   try {
     const res = await getAllMenuTree()
     if (res.code === 200) {
-      menuTree.value = res.data
+      // 递归删除 icon 字段，避免 Arco Tree 的 icon prop 类型冲突
+      menuTree.value = res.data.map(removeIconField)
       expandedKeys.value = res.data.map((m) => m.id)
     }
   } finally {
@@ -56,16 +64,23 @@ async function fetchMenuTree() {
 async function loadMenuOptions() {
   const res = await getMenuOptions()
   if (res.code === 200) {
-    menuOptions.value = [{ menuId: 0, menuName: '顶级菜单', parentId: 0, path: '', menuType: 0, visible: 0, status: 1, orderNum: 0 }, ...res.data]
+    menuOptions.value = [{ menuId: 0, menuName: '顶级菜单', parentId: 0, path: '', menuType: '1', visible: '0', orderNum: 0 }, ...res.data] as SysMenu[]
   }
 }
 
-function formatMenuType(type: number) {
-  return menuTypeOptions.find((t) => t.value === type)?.label || ''
+function formatMenuType(type: string | number) {
+  // 后端返回 "1"=目录, "2"=菜单, "3"=按钮
+  const typeMap: Record<string, string> = {
+    '1': '目录',
+    '2': '菜单',
+    '3': '按钮',
+  }
+  return typeMap[String(type)] || ''
 }
 
-function formatStatus(status: number) {
-  return status === 0 ? '显示' : '隐藏'
+function formatStatus(visible: string | number) {
+  // 后端返回 "0"=显示, "1"=隐藏
+  return String(visible) === '0' ? '显示' : '隐藏'
 }
 
 function openAddModal(parentId = 0) {
@@ -76,9 +91,8 @@ function openAddModal(parentId = 0) {
     parentId,
     path: '',
     component: '',
-    menuType: 1,
-    visible: 0,
-    status: 1,
+    menuType: '2',
+    visible: '0',
     perms: '',
     icon: '',
     orderNum: 0,
@@ -97,7 +111,6 @@ function openEditModal(row: SysMenu) {
     component: row.component || '',
     menuType: row.menuType,
     visible: row.visible,
-    status: row.status,
     perms: row.perms || '',
     icon: row.icon || '',
     orderNum: row.orderNum,
@@ -176,32 +189,29 @@ onMounted(() => {
       <div v-else class="menu-tree">
         <a-tree
           v-model:expanded-keys="expandedKeys"
-          :data="menuTree"
+          :data="(menuTree as any)"
           :field-names="{ key: 'id', title: 'menuName', children: 'children' }"
           block-node
         >
-          <template #title="{ data }">
+          <template #title="slotProps">
             <div class="menu-item">
               <div class="menu-info">
-                <span class="menu-icon" v-if="data.icon">
-                  <component :is="data.icon" />
-                </span>
-                <span class="menu-name">{{ data.menuName }}</span>
-                <span class="menu-type-tag" :class="'type-' + data.menuType">
-                  {{ formatMenuType(data.menuType) }}
+                <span class="menu-name">{{ slotProps.menuName }}</span>
+                <span class="menu-type-tag" :class="'type-' + slotProps.menuType">
+                  {{ formatMenuType(slotProps.menuType) }}
                 </span>
               </div>
               <div class="menu-meta">
-                <span class="menu-path">{{ data.path || '-' }}</span>
-                <span class="menu-perms" v-if="data.perms">{{ data.perms }}</span>
-                <span class="menu-status" :class="data.status === 0 ? 'show' : 'hide'">
-                  {{ formatStatus(data.status) }}
+                <span class="menu-path">{{ slotProps.path || '-' }}</span>
+                <span class="menu-perms" v-if="slotProps.perms">{{ slotProps.perms }}</span>
+                <span class="menu-status" :class="slotProps.visible === '0' ? 'show' : 'hide'">
+                  {{ formatStatus(slotProps.visible) }}
                 </span>
               </div>
               <div class="menu-actions">
-                <button class="action-btn" @click.stop="openAddModal(data.id)">新增</button>
-                <button class="action-btn" @click.stop="openEditModal(data)">编辑</button>
-                <button class="action-btn danger" @click.stop="handleDelete(data)">删除</button>
+                <button class="action-btn" @click.stop="openAddModal(slotProps.id)">新增</button>
+                <button class="action-btn" @click.stop="openEditModal(slotProps)">编辑</button>
+                <button class="action-btn danger" @click.stop="handleDelete(slotProps)">删除</button>
               </div>
             </div>
           </template>
@@ -227,7 +237,7 @@ onMounted(() => {
             </div>
           </div>
 
-          <div v-if="formData.menuType !== 2" class="form-group">
+          <div v-if="formData.menuType !== '3'" class="form-group">
             <label>上级菜单</label>
             <select v-model="formData.parentId" class="form-select">
               <option :value="0">顶级菜单</option>
@@ -242,22 +252,22 @@ onMounted(() => {
             <input v-model="formData.menuName" placeholder="请输入菜单名称" class="form-input" />
           </div>
 
-          <div v-if="formData.menuType !== 2" class="form-group">
+          <div v-if="formData.menuType !== '3'" class="form-group">
             <label>图标</label>
             <IconPicker v-model="formData.icon" />
           </div>
 
-          <div v-if="formData.menuType !== 2" class="form-group">
+          <div v-if="formData.menuType !== '3'" class="form-group">
             <label>路由地址 <span class="required">*</span></label>
             <input v-model="formData.path" placeholder="请输入路由地址" class="form-input" />
           </div>
 
-          <div v-if="formData.menuType === 1" class="form-group">
+          <div v-if="formData.menuType === '2'" class="form-group">
             <label>组件路径</label>
             <input v-model="formData.component" placeholder="如: system/user/index" class="form-input" />
           </div>
 
-          <div v-if="formData.menuType === 2" class="form-group">
+          <div v-if="formData.menuType === '3'" class="form-group">
             <label>权限标识 <span class="required">*</span></label>
             <input v-model="formData.perms" placeholder="如: system:user:list" class="form-input" />
           </div>
