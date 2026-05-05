@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
 import { useTable } from '@/composables/useTable'
-import { getUserPage, addUser, updateUser, deleteUser, getRoleOptions } from '@/api/user'
+import { getUserPage, addUser, updateUser, deleteUser } from '@/api/user'
 import type { SysUser, SysUserQuery, SysUserDTO } from '@/types'
 import { Message, Modal } from '@arco-design/web-vue'
+import isEmail from 'validator/lib/isEmail'
+import isMobilePhone from 'validator/lib/isMobilePhone'
 
 const searchForm = reactive({
   username: '',
@@ -18,7 +20,6 @@ const { loading, dataSource, pagination, fetchData, onPageChange, onPageSizeChan
 const modalVisible = ref(false)
 const modalLoading = ref(false)
 const isEdit = ref(false)
-const formRef = ref()
 
 const formData = reactive<SysUserDTO>({
   id: undefined,
@@ -27,15 +28,6 @@ const formData = reactive<SysUserDTO>({
   email: '',
   mobile: '',
 })
-
-const roleOptions = ref<{ label: string; value: number }[]>([])
-
-async function loadRoleOptions() {
-  const res = await getRoleOptions()
-  if (res.code === 200) {
-    roleOptions.value = res.data.map((r) => ({ label: r.roleName, value: r.roleId }))
-  }
-}
 
 function handleSearch() {
   pagination.current = 1
@@ -60,7 +52,6 @@ function openAddModal() {
     email: '',
     mobile: '',
   })
-  loadRoleOptions()
   modalVisible.value = true
 }
 
@@ -73,13 +64,26 @@ function openEditModal(row: SysUser) {
     email: row.email || '',
     mobile: row.mobile || '',
   })
-  loadRoleOptions()
   modalVisible.value = true
 }
 
 async function handleSubmit() {
-  const valid = await formRef.value?.validate()
-  if (!valid) return
+  if (!formData.username.trim()) {
+    Message.warning('请输入用户名')
+    return
+  }
+  if (!isEdit.value && !formData.password.trim()) {
+    Message.warning('请输入密码')
+    return
+  }
+  if (formData.email && !isEmail(formData.email)) {
+    Message.warning('邮箱格式不正确')
+    return
+  }
+  if (formData.mobile && !isMobilePhone(formData.mobile, 'zh-CN')) {
+    Message.warning('手机号格式不正确')
+    return
+  }
 
   modalLoading.value = true
   try {
@@ -98,11 +102,11 @@ async function handleSubmit() {
 function handleDelete(row: SysUser) {
   Modal.warning({
     title: '确认删除',
-    content: `确定要删除用户 "${row.nickname}" 吗？`,
+    content: `确定要删除用户 "${row.username}" 吗？`,
     okText: '确定',
     cancelText: '取消',
     async onOk() {
-      const res = await deleteUser(row.userId)
+      const res = await deleteUser(row.id)
       if (res.code === 200) {
         Message.success('删除成功')
         fetchData()

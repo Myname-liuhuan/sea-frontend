@@ -49,6 +49,10 @@ export function assignMenus(data: { roleId: number; menuIds: number[] }): Promis
   })
 }
 
+export function getRoleMenuIds(roleId: number): Promise<ApiResponse<number[]>> {
+  return request.get(`/system/sysRole/menuIds/${roleId}`)
+}
+
 /**
  * 获取所有角色选项（用于下拉选择）
  * 使用 /system/sysRole/list 接口获取角色列表

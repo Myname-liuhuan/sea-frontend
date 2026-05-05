@@ -6,7 +6,9 @@ import {
   addRole,
   updateRole,
   assignUsers,
+  assignMenus,
   getAllRoleList,
+  getRoleMenuIds,
 } from '@/api/role'
 import { getAllMenuTree } from '@/api/menu'
 import { getUserPage } from '@/api/user'
@@ -55,8 +57,19 @@ const menuModalVisible = ref(false)
 const menuModalLoading = ref(false)
 const menuLoading = ref(false)
 const menuTree = ref<SysMenu[]>([])
+const menuExpandedKeys = ref<number[]>([])
 const selectedMenuIds = ref<number[]>([])
 const currentMenuRoleId = ref(0)
+
+function removeIconField<T extends Record<string, any>>(obj: T): T {
+  if (!obj) return obj
+  const { icon, children, ...rest } = obj
+  const result = { ...rest } as T
+  if (children && Array.isArray(children)) {
+    (result as any).children = children.map(removeIconField)
+  }
+  return result
+}
 
 function handleSearch() {
   pagination.current = 1
@@ -171,9 +184,16 @@ async function openAssignMenusModal(row: SysRole) {
   menuModalVisible.value = true
 
   try {
-    const menuRes = await getAllMenuTree()
+    const [menuRes, checkedRes] = await Promise.all([
+      getAllMenuTree(),
+      getRoleMenuIds(row.id),
+    ])
     if (menuRes.code === 200) {
-      menuTree.value = menuRes.data
+      menuTree.value = menuRes.data.map(removeIconField)
+      menuExpandedKeys.value = menuRes.data.map((m: SysMenu) => m.id)
+    }
+    if (checkedRes.code === 200) {
+      selectedMenuIds.value = checkedRes.data
     }
   } finally {
     menuLoading.value = false
@@ -369,11 +389,11 @@ function formatStatus(status: string) {
             <!-- 菜单树使用 Arco Design Tree 组件 -->
             <a-tree
               v-model:checked-keys="selectedMenuIds"
-              :data="menuTree"
+              v-model:expanded-keys="menuExpandedKeys"
+              :data="(menuTree as any)"
               :field-names="{ key: 'id', title: 'menuName', children: 'children' }"
-              multiple
               checkable
-              :default-expand-all="true"
+              block-node
             />
           </div>
         </div>
