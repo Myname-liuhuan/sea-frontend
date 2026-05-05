@@ -9,6 +9,7 @@ import {
   assignMenus,
   getAllRoleList,
   getRoleMenuIds,
+  getRoleUserIds,
 } from '@/api/role'
 import { getAllMenuTree } from '@/api/menu'
 import { getUserPage } from '@/api/user'
@@ -48,8 +49,8 @@ const statusOptions = [
 const userModalVisible = ref(false)
 const userModalLoading = ref(false)
 const userLoading = ref(false)
-const allUsers = ref<{ id: number; username: string }[]>([])
-const selectedUserIds = ref<number[]>([])
+const allUsers = ref<{ id: string; username: string }[]>([])
+const selectedUserIds = ref<string[]>([])
 const currentRoleId = ref(0)
 
 // 菜单分配弹窗相关
@@ -57,14 +58,14 @@ const menuModalVisible = ref(false)
 const menuModalLoading = ref(false)
 const menuLoading = ref(false)
 const menuTree = ref<SysMenu[]>([])
-const menuExpandedKeys = ref<number[]>([])
-const selectedMenuIds = ref<number[]>([])
+const menuExpandedKeys = ref<string[]>([])
+const selectedMenuIds = ref<string[]>([])
 const currentMenuRoleId = ref(0)
 
 function removeIconField<T extends Record<string, any>>(obj: T): T {
   if (!obj) return obj
   const { icon, children, ...rest } = obj
-  const result = { ...rest } as T
+  const result = { ...rest, id: String(obj.id) } as T
   if (children && Array.isArray(children)) {
     (result as any).children = children.map(removeIconField)
   }
@@ -148,12 +149,18 @@ async function openAssignUsersModal(row: SysRole) {
   userModalVisible.value = true
 
   try {
-    const usersRes = await getUserPage({ pageNum: 1, pageSize: 100 })
+    const [usersRes, checkedRes] = await Promise.all([
+      getUserPage({ pageNum: 1, pageSize: 100 }),
+      getRoleUserIds(row.id),
+    ])
     if (usersRes.code === 200) {
-      allUsers.value = usersRes.data.rows.map((u) => ({
-        id: u.id,
+      allUsers.value = usersRes.data.rows.map((u: any) => ({
+        id: String(u.id),
         username: u.username,
       }))
+    }
+    if (checkedRes.code === 200) {
+      selectedUserIds.value = checkedRes.data
     }
   } finally {
     userLoading.value = false
@@ -190,7 +197,7 @@ async function openAssignMenusModal(row: SysRole) {
     ])
     if (menuRes.code === 200) {
       menuTree.value = menuRes.data.map(removeIconField)
-      menuExpandedKeys.value = menuRes.data.map((m: SysMenu) => m.id)
+      menuExpandedKeys.value = menuRes.data.map((m: SysMenu) => String(m.id))
     }
     if (checkedRes.code === 200) {
       selectedMenuIds.value = checkedRes.data
