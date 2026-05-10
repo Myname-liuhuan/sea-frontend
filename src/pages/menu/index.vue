@@ -209,7 +209,7 @@ onMounted(() => {
                 </span>
               </div>
               <div class="menu-actions">
-                <button class="action-btn" @click.stop="openAddModal(slotProps.id)">新增</button>
+                <button v-if="slotProps.menuType !== '3'" class="action-btn" @click.stop="openAddModal(slotProps.id)">新增</button>
                 <button class="action-btn" @click.stop="openEditModal(slotProps)">编辑</button>
                 <button class="action-btn danger" @click.stop="handleDelete(slotProps)">删除</button>
               </div>
