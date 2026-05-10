@@ -1,156 +1,24 @@
 <script setup lang="ts">
-import { reactive, ref, onMounted } from 'vue'
-import { getDeptTree, addDept, updateDept, deleteDept, getDeptTreeSelect, type SysDept, type SysDeptDTO } from '@/api/dept'
-import { Message, Modal } from '@arco-design/web-vue'
+import { useDeptPage } from '@/hooks/useDeptPage'
+import { ENTITY_STATUS } from '@/constants'
 
-const loading = ref(false)
-const treeData = ref<SysDept[]>([])
-
-const modalVisible = ref(false)
-const modalLoading = ref(false)
-const isEdit = ref(false)
-const formRef = ref()
-
-const formData = reactive<SysDeptDTO>({
-  id: undefined,
-  parentId: 0,
-  name: '',
-  orderNum: 0,
-  leader: '',
-  mobile: '',
-  email: '',
-  status: '1',
-})
-
-const parentDeptOptions = ref<{ label: string; value: number }[]>([])
-
-const statusOptions = [
-  { label: '正常', value: '1' },
-  { label: '停用', value: '0' },
-]
-
-async function fetchData() {
-  loading.value = true
-  try {
-    const res = await getDeptTree()
-    if (res.code === 200) {
-      treeData.value = res.data || []
-    }
-  } finally {
-    loading.value = false
-  }
-}
-
-async function loadParentDeptOptions() {
-  const res = await getDeptTreeSelect()
-  if (res.code === 200) {
-    parentDeptOptions.value = convertToOptions(res.data || [])
-  }
-}
-
-function convertToOptions(depts: SysDept[], level = 0): { label: string; value: number }[] {
-  const result: { label: string; value: number }[] = []
-  for (const dept of depts) {
-    result.push({
-      label: '　'.repeat(level) + dept.name,
-      value: dept.id,
-    })
-    if (dept.children) {
-      result.push(...convertToOptions(dept.children, level + 1))
-    }
-  }
-  return result
-}
-
-function openAddModal(parentId = 0) {
-  isEdit.value = false
-  Object.assign(formData, {
-    id: undefined,
-    parentId: parentId,
-    name: '',
-    orderNum: 0,
-    leader: '',
-    mobile: '',
-    email: '',
-    status: '1',
-  })
-  loadParentDeptOptions()
-  modalVisible.value = true
-}
-
-function openEditModal(row: SysDept) {
-  isEdit.value = true
-  Object.assign(formData, {
-    id: row.id,
-    parentId: row.parentId,
-    name: row.name,
-    orderNum: row.orderNum,
-    leader: row.leader || '',
-    mobile: row.mobile || '',
-    email: row.email || '',
-    status: row.status,
-  })
-  loadParentDeptOptions()
-  modalVisible.value = true
-}
-
-async function handleSubmit() {
-  modalLoading.value = true
-  try {
-    const api = isEdit.value ? updateDept : addDept
-    const res = await api(formData)
-    if (res.code === 200) {
-      Message.success(isEdit.value ? '修改成功' : '新增成功')
-      modalVisible.value = false
-      fetchData()
-    } else {
-      Message.error(res.message || '操作失败')
-    }
-  } finally {
-    modalLoading.value = false
-  }
-}
-
-function handleDelete(row: SysDept) {
-  Modal.warning({
-    title: '确认删除',
-    content: `确定要删除部门 "${row.name}" 吗？`,
-    okText: '确定',
-    cancelText: '取消',
-    async onOk() {
-      const res = await deleteDept(row.id)
-      if (res.code === 200) {
-        Message.success('删除成功')
-        fetchData()
-      } else {
-        Message.error(res.message || '删除失败')
-      }
-    },
-  })
-}
-
-function formatStatus(status: string) {
-  return status === '1' ? '正常' : '停用'
-}
-
-function renderDeptTree(depts: SysDept[], level = 0): { dept: SysDept; level: number }[] {
-  const result: { dept: SysDept; level: number }[] = []
-  for (const dept of depts) {
-    result.push({ dept, level })
-    if (dept.children) {
-      result.push(...renderDeptTree(dept.children, level + 1))
-    }
-  }
-  return result
-}
-
-const flatData = () => {
-  return renderDeptTree(treeData.value)
-}
-
-onMounted(() => {
-  fetchData()
-})
+const {
+  loading,
+  treeData,
+  modalVisible,
+  modalLoading,
+  isEdit,
+  formData,
+  parentDeptOptions,
+  statusOptions,
+  openAddModal,
+  openEditModal,
+  handleSubmit,
+  handleDelete,
+  formatStatus,
+  flatData,
+  closeModal,
+} = useDeptPage()
 </script>
 
 <template>
@@ -160,7 +28,6 @@ onMounted(() => {
       <p>管理部门组织架构</p>
     </div>
 
-    <!-- 操作栏 -->
     <div class="toolbar">
       <div class="toolbar-title">
         <span class="title">部门列表</span>
@@ -175,7 +42,6 @@ onMounted(() => {
       </button>
     </div>
 
-    <!-- 表格 -->
     <div class="table-wrapper">
       <table class="data-table">
         <thead>
@@ -213,7 +79,7 @@ onMounted(() => {
               <td>{{ dept.mobile || '-' }}</td>
               <td>{{ dept.email || '-' }}</td>
               <td>
-                <span class="status-tag" :class="dept.status === '1' ? 'success' : 'danger'">
+                <span class="status-tag" :class="dept.status === ENTITY_STATUS.ACTIVE ? 'success' : 'danger'">
                   {{ formatStatus(dept.status) }}
                 </span>
               </td>
@@ -231,11 +97,11 @@ onMounted(() => {
     </div>
 
     <!-- 弹窗 -->
-    <div v-if="modalVisible" class="modal-mask" @click.self="modalVisible = false">
+    <div v-if="modalVisible" class="modal-mask" @click.self="closeModal">
       <div class="modal-container">
         <div class="modal-header">
           <h3>{{ isEdit ? '编辑部门' : '新增部门' }}</h3>
-          <button class="modal-close" @click="modalVisible = false">&times;</button>
+          <button class="modal-close" @click="closeModal">&times;</button>
         </div>
         <div class="modal-body">
           <div class="form-group">
@@ -278,7 +144,7 @@ onMounted(() => {
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-default" @click="modalVisible = false">取消</button>
+          <button class="btn btn-default" @click="closeModal">取消</button>
           <button class="btn btn-primary" @click="handleSubmit" :disabled="modalLoading">
             {{ modalLoading ? '保存中...' : '确定' }}
           </button>
@@ -327,16 +193,8 @@ onMounted(() => {
   align-items: baseline;
   gap: 8px;
 
-  .title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #1a1a1a;
-  }
-
-  .count {
-    font-size: 13px;
-    color: #999;
-  }
+  .title { font-size: 16px; font-weight: 600; color: #1a1a1a; }
+  .count { font-size: 13px; color: #999; }
 }
 
 .table-wrapper {
@@ -353,7 +211,6 @@ onMounted(() => {
 
   thead {
     background: #fafafa;
-
     th {
       text-align: left;
       padding: 14px 16px;
@@ -364,12 +221,7 @@ onMounted(() => {
   }
 
   tbody tr {
-    transition: background 0.2s;
-
-    &:hover {
-      background: #fafafa;
-    }
-
+    &:hover { background: #fafafa; }
     td {
       padding: 12px 16px;
       border-bottom: 1px solid #f5f5f5;
@@ -394,7 +246,6 @@ onMounted(() => {
     color: #52c41a;
     border: 1px solid #b7eb8f;
   }
-
   &.danger {
     background: #fff1f0;
     color: #ff4d4f;
@@ -415,21 +266,10 @@ onMounted(() => {
   border: none;
   cursor: pointer;
   border-radius: 4px;
-
-  &:hover {
-    background: #e6f7ff;
-  }
-
-  &.danger {
-    color: #ff4d4f;
-
-    &:hover {
-      background: #fff1f0;
-    }
-  }
+  &:hover { background: #e6f7ff; }
+  &.danger { color: #ff4d4f; &:hover { background: #fff1f0; } }
 }
 
-/* 按钮样式 */
 .btn {
   height: 36px;
   padding: 0 16px;
@@ -443,37 +283,23 @@ onMounted(() => {
   border: none;
   transition: all 0.2s;
 
-  svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+  svg { width: 16px; height: 16px; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 
 .btn-primary {
   background: #1a1a1a;
   color: #fff;
-
-  &:hover:not(:disabled) {
-    background: #333;
-  }
+  &:hover:not(:disabled) { background: #333; }
 }
 
 .btn-default {
   background: #fff;
   color: #333;
   border: 1px solid #e8e8e8;
-
-  &:hover {
-    background: #fafafa;
-  }
+  &:hover { background: #fafafa; }
 }
 
-/* 表单样式 */
 .form-group {
   margin-bottom: 16px;
 
@@ -485,13 +311,10 @@ onMounted(() => {
     margin-bottom: 6px;
   }
 
-  .required {
-    color: #ff4d4f;
-  }
+  .required { color: #ff4d4f; }
 }
 
-.form-input,
-.form-select {
+.form-input, .form-select {
   width: 100%;
   height: 36px;
   padding: 0 12px;
@@ -526,81 +349,6 @@ onMounted(() => {
   color: #333;
   cursor: pointer;
 
-  input[type="radio"] {
-    accent-color: #1a1a1a;
-  }
-}
-
-/* 弹窗样式 */
-.modal-mask {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal-container {
-  width: 520px;
-  max-height: 90vh;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  animation: modalIn 0.2s ease-out;
-  display: flex;
-  flex-direction: column;
-}
-
-@keyframes modalIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid #f0f0f0;
-
-  h3 {
-    font-size: 16px;
-    font-weight: 600;
-    color: #1a1a1a;
-    margin: 0;
-  }
-}
-
-.modal-close {
-  width: 28px;
-  height: 28px;
-  font-size: 20px;
-  color: #999;
-  background: none;
-  border: none;
-  cursor: pointer;
-  border-radius: 4px;
-
-  &:hover {
-    background: #f5f5f5;
-    color: #333;
-  }
-}
-
-.modal-body {
-  padding: 24px;
-  overflow-y: auto;
-  flex: 1;
-}
-
-.modal-footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 24px;
-  border-top: 1px solid #f0f0f0;
+  input[type="radio"] { accent-color: #1a1a1a; }
 }
 </style>

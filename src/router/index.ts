@@ -11,13 +11,13 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'home',
         name: 'Home',
-        component: () => import('@/pages/home/index.vue'),
+        component: () => import('@/views/home/index.vue'),
         meta: { title: '首页' },
       },
       {
         path: 'about',
         name: 'About',
-        component: () => import('@/pages/about/index.vue'),
+        component: () => import('@/views/about/index.vue'),
         meta: { title: '关于' },
       },
     ],
@@ -30,25 +30,25 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'user',
         name: 'SystemUser',
-        component: () => import('@/pages/user/index.vue'),
+        component: () => import('@/views/user/index.vue'),
         meta: { title: '用户管理' },
       },
       {
         path: 'role',
         name: 'SystemRole',
-        component: () => import('@/pages/role/index.vue'),
+        component: () => import('@/views/role/index.vue'),
         meta: { title: '角色管理' },
       },
       {
         path: 'menu',
         name: 'SystemMenu',
-        component: () => import('@/pages/menu/index.vue'),
+        component: () => import('@/views/menu/index.vue'),
         meta: { title: '菜单管理' },
       },
       {
         path: 'dept',
         name: 'SystemDept',
-        component: () => import('@/pages/dept/index.vue'),
+        component: () => import('@/views/dept/index.vue'),
         meta: { title: '部门管理' },
       },
     ],
@@ -56,7 +56,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/login',
     name: 'Login',
-    component: () => import('@/pages/login/index.vue'),
+    component: () => import('@/views/login/index.vue'),
     meta: { title: '登录' },
   },
 ]

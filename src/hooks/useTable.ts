@@ -1,5 +1,6 @@
 import { ref, reactive } from 'vue'
 import type { PageQuery, PageResult } from '@/types'
+import { DEFAULT_PAGE_SIZE } from '@/constants'
 
 interface UseTableOptions<T, P extends PageQuery> {
   api: (params: P) => Promise<PageResult<T>>
@@ -15,7 +16,7 @@ export function useTable<T, P extends PageQuery = PageQuery>(
   const dataSource = ref<T[]>([])
   const pagination = reactive({
     current: 1,
-    pageSize: 10,
+    pageSize: DEFAULT_PAGE_SIZE,
     total: 0,
     showTotal: true,
     showPageSize: true,
@@ -33,10 +34,10 @@ export function useTable<T, P extends PageQuery = PageQuery>(
       } as P
 
       const res = await api(queryParams)
-      dataSource.value = res.data.rows
-      pagination.total = res.data.total
-      pagination.current = res.data.pageNum
-      pagination.pageSize = res.data.pageSize
+      dataSource.value = res.rows
+      pagination.total = res.total
+      pagination.current = res.pageNum
+      pagination.pageSize = res.pageSize
     } finally {
       loading.value = false
     }
@@ -53,7 +54,6 @@ export function useTable<T, P extends PageQuery = PageQuery>(
     fetchData()
   }
 
-  // 初始加载
   fetchData()
 
   return {

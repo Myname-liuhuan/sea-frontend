@@ -1,119 +1,27 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
-import { useTable } from '@/composables/useTable'
-import { getUserPage, addUser, updateUser, deleteUser } from '@/api/user'
-import type { SysUser, SysUserQuery, SysUserDTO } from '@/types'
-import { Message, Modal } from '@arco-design/web-vue'
-import isEmail from 'validator/lib/isEmail'
-import isMobilePhone from 'validator/lib/isMobilePhone'
+import { useUserPage } from '@/hooks/useUserPage'
+import { PAGE_SIZE_OPTIONS, USER_BAN_STATUS } from '@/constants'
 
-const searchForm = reactive({
-  username: '',
-  mobile: '',
-})
-
-const { loading, dataSource, pagination, fetchData, onPageChange, onPageSizeChange } = useTable<SysUser, SysUserQuery>({
-  api: getUserPage,
-  defaultParams: { pageSize: 10 },
-})
-
-const modalVisible = ref(false)
-const modalLoading = ref(false)
-const isEdit = ref(false)
-
-const formData = reactive<SysUserDTO>({
-  id: undefined,
-  username: '',
-  password: '',
-  email: '',
-  mobile: '',
-})
-
-function handleSearch() {
-  pagination.current = 1
-  fetchData({
-    username: searchForm.username || undefined,
-    mobile: searchForm.mobile || undefined,
-  } as Partial<SysUserQuery>)
-}
-
-function handleReset() {
-  searchForm.username = ''
-  searchForm.mobile = ''
-  handleSearch()
-}
-
-function openAddModal() {
-  isEdit.value = false
-  Object.assign(formData, {
-    id: undefined,
-    username: '',
-    password: '',
-    email: '',
-    mobile: '',
-  })
-  modalVisible.value = true
-}
-
-function openEditModal(row: SysUser) {
-  isEdit.value = true
-  Object.assign(formData, {
-    id: row.id,
-    username: row.username,
-    password: '',
-    email: row.email || '',
-    mobile: row.mobile || '',
-  })
-  modalVisible.value = true
-}
-
-async function handleSubmit() {
-  if (!formData.username.trim()) {
-    Message.warning('请输入用户名')
-    return
-  }
-  if (!isEdit.value && !formData.password.trim()) {
-    Message.warning('请输入密码')
-    return
-  }
-  if (formData.email && !isEmail(formData.email)) {
-    Message.warning('邮箱格式不正确')
-    return
-  }
-  if (formData.mobile && !isMobilePhone(formData.mobile, 'zh-CN')) {
-    Message.warning('手机号格式不正确')
-    return
-  }
-
-  modalLoading.value = true
-  try {
-    const api = isEdit.value ? updateUser : addUser
-    const res = await api(formData)
-    if (res.code === 200) {
-      Message.success(isEdit.value ? '修改成功' : '新增成功')
-      modalVisible.value = false
-      fetchData()
-    }
-  } finally {
-    modalLoading.value = false
-  }
-}
-
-function handleDelete(row: SysUser) {
-  Modal.warning({
-    title: '确认删除',
-    content: `确定要删除用户 "${row.username}" 吗？`,
-    okText: '确定',
-    cancelText: '取消',
-    async onOk() {
-      const res = await deleteUser(row.id)
-      if (res.code === 200) {
-        Message.success('删除成功')
-        fetchData()
-      }
-    },
-  })
-}
+const {
+  searchForm,
+  loading,
+  dataSource,
+  pagination,
+  modalVisible,
+  modalLoading,
+  isEdit,
+  formData,
+  totalPages,
+  handleSearch,
+  handleReset,
+  openAddModal,
+  openEditModal,
+  handleSubmit,
+  handleDelete,
+  onPageChange,
+  handlePageSizeChange,
+  closeModal,
+} = useUserPage()
 </script>
 
 <template>
@@ -187,7 +95,11 @@ function handleDelete(row: SysUser) {
             <td>{{ row.email || '-' }}</td>
             <td>{{ row.mobile || '-' }}</td>
             <td>{{ row.avatarUrl || '-' }}</td>
-            <td>{{ row.isBanned === '1' ? '封禁' : '正常' }}</td>
+            <td>
+              <span class="status-tag" :class="row.isBanned === USER_BAN_STATUS.BANNED ? 'danger' : 'success'">
+                {{ row.isBanned === USER_BAN_STATUS.BANNED ? '封禁' : '正常' }}
+              </span>
+            </td>
             <td>{{ row.createTime }}</td>
             <td>
               <div class="table-actions">
@@ -203,25 +115,23 @@ function handleDelete(row: SysUser) {
     <!-- 分页 -->
     <div class="pagination-wrapper">
       <div class="pagination-info">
-        共 {{ pagination.total }} 条，第 {{ pagination.current }}/{{ Math.ceil(pagination.total / pagination.pageSize) || 1 }} 页
+        共 {{ pagination.total }} 条，第 {{ pagination.current }}/{{ totalPages }} 页
       </div>
       <div class="pagination-controls">
-        <select :value="pagination.pageSize" @change="(e: any) => onPageSizeChange(e.target.value)" class="page-size-select">
-          <option :value="10">10 条/页</option>
-          <option :value="20">20 条/页</option>
-          <option :value="50">50 条/页</option>
+        <select :value="pagination.pageSize" @change="handlePageSizeChange" class="page-size-select">
+          <option v-for="size in PAGE_SIZE_OPTIONS" :key="size" :value="size">{{ size }} 条/页</option>
         </select>
         <button :disabled="pagination.current === 1" @click="onPageChange(pagination.current - 1)">上一页</button>
-        <button :disabled="pagination.current >= Math.ceil(pagination.total / pagination.pageSize)" @click="onPageChange(pagination.current + 1)">下一页</button>
+        <button :disabled="pagination.current >= totalPages" @click="onPageChange(pagination.current + 1)">下一页</button>
       </div>
     </div>
 
     <!-- 弹窗 -->
-    <div v-if="modalVisible" class="modal-mask" @click.self="modalVisible = false">
+    <div v-if="modalVisible" class="modal-mask" @click.self="closeModal">
       <div class="modal-container">
         <div class="modal-header">
           <h3>{{ isEdit ? '编辑用户' : '新增用户' }}</h3>
-          <button class="modal-close" @click="modalVisible = false">&times;</button>
+          <button class="modal-close" @click="closeModal">&times;</button>
         </div>
         <div class="modal-body">
           <div class="form-group">
@@ -244,7 +154,7 @@ function handleDelete(row: SysUser) {
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-default" @click="modalVisible = false">取消</button>
+          <button class="btn btn-default" @click="closeModal">取消</button>
           <button class="btn btn-primary" @click="handleSubmit" :disabled="modalLoading">
             {{ modalLoading ? '保存中...' : '确定' }}
           </button>
@@ -291,28 +201,19 @@ function handleDelete(row: SysUser) {
   }
 }
 
-.search-input,
-.search-select {
+.search-input {
+  width: 160px;
   height: 36px;
   padding: 0 12px;
   font-size: 13px;
   border: 1px solid #e8e8e8;
   border-radius: 6px;
   outline: none;
-  transition: all 0.2s;
 
   &:focus {
     border-color: #1a1a1a;
     box-shadow: 0 0 0 2px rgba(26, 26, 26, 0.06);
   }
-}
-
-.search-input {
-  width: 160px;
-}
-
-.search-select {
-  width: 120px;
 }
 
 .form-actions {
@@ -333,34 +234,21 @@ function handleDelete(row: SysUser) {
   border: none;
   transition: all 0.2s;
 
-  svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+  svg { width: 16px; height: 16px; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 
 .btn-primary {
   background: #1a1a1a;
   color: #fff;
-
-  &:hover:not(:disabled) {
-    background: #333;
-  }
+  &:hover:not(:disabled) { background: #333; }
 }
 
 .btn-default {
   background: #fff;
   color: #333;
   border: 1px solid #e8e8e8;
-
-  &:hover {
-    background: #fafafa;
-  }
+  &:hover { background: #fafafa; }
 }
 
 .toolbar {
@@ -375,16 +263,8 @@ function handleDelete(row: SysUser) {
   align-items: baseline;
   gap: 8px;
 
-  .title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #1a1a1a;
-  }
-
-  .count {
-    font-size: 13px;
-    color: #999;
-  }
+  .title { font-size: 16px; font-weight: 600; color: #1a1a1a; }
+  .count { font-size: 13px; color: #999; }
 }
 
 .table-wrapper {
@@ -401,7 +281,6 @@ function handleDelete(row: SysUser) {
 
   thead {
     background: #fafafa;
-
     th {
       text-align: left;
       padding: 14px 16px;
@@ -412,12 +291,7 @@ function handleDelete(row: SysUser) {
   }
 
   tbody tr {
-    transition: background 0.2s;
-
-    &:hover {
-      background: #fafafa;
-    }
-
+    &:hover { background: #fafafa; }
     td {
       padding: 14px 16px;
       border-bottom: 1px solid #f5f5f5;
@@ -437,7 +311,6 @@ function handleDelete(row: SysUser) {
     color: #52c41a;
     border: 1px solid #b7eb8f;
   }
-
   &.danger {
     background: #fff1f0;
     color: #ff4d4f;
@@ -458,28 +331,16 @@ function handleDelete(row: SysUser) {
   border: none;
   cursor: pointer;
   border-radius: 4px;
-
-  &:hover {
-    background: #e6f7ff;
-  }
-
-  &.danger {
-    color: #ff4d4f;
-
-    &:hover {
-      background: #fff1f0;
-    }
-  }
+  &:hover { background: #e6f7ff; }
+  &.danger { color: #ff4d4f; &:hover { background: #fff1f0; } }
 }
 
-.empty-row td,
-.loading-row td {
+.empty-row td, .loading-row td {
   text-align: center;
   padding: 48px 16px;
 }
 
-.empty-state,
-.loading-spinner {
+.empty-state, .loading-spinner {
   color: #999;
   font-size: 13px;
 }
@@ -491,10 +352,7 @@ function handleDelete(row: SysUser) {
   padding: 16px 0;
 }
 
-.pagination-info {
-  font-size: 13px;
-  color: #666;
-}
+.pagination-info { font-size: 13px; color: #666; }
 
 .pagination-controls {
   display: flex;
@@ -509,15 +367,8 @@ function handleDelete(row: SysUser) {
     border: 1px solid #e8e8e8;
     border-radius: 6px;
     cursor: pointer;
-
-    &:hover:not(:disabled) {
-      background: #fafafa;
-    }
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+    &:hover:not(:disabled) { background: #fafafa; }
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
   }
 }
 
@@ -527,70 +378,6 @@ function handleDelete(row: SysUser) {
   border: 1px solid #e8e8e8;
   border-radius: 6px;
   font-size: 13px;
-}
-
-/* 弹窗样式 */
-.modal-mask {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal-container {
-  width: 520px;
-  max-height: 90vh;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  animation: modalIn 0.2s ease-out;
-  display: flex;
-  flex-direction: column;
-}
-
-@keyframes modalIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid #f0f0f0;
-
-  h3 {
-    font-size: 16px;
-    font-weight: 600;
-    color: #1a1a1a;
-    margin: 0;
-  }
-}
-
-.modal-close {
-  width: 28px;
-  height: 28px;
-  font-size: 20px;
-  color: #999;
-  background: none;
-  border: none;
-  cursor: pointer;
-  border-radius: 4px;
-
-  &:hover {
-    background: #f5f5f5;
-    color: #333;
-  }
-}
-
-.modal-body {
-  padding: 24px;
-  overflow-y: auto;
-  flex: 1;
 }
 
 .form-group {
@@ -604,9 +391,7 @@ function handleDelete(row: SysUser) {
     margin-bottom: 6px;
   }
 
-  .required {
-    color: #ff4d4f;
-  }
+  .required { color: #ff4d4f; }
 }
 
 .form-input {
@@ -622,7 +407,6 @@ function handleDelete(row: SysUser) {
     border-color: #1a1a1a;
     box-shadow: 0 0 0 2px rgba(26, 26, 26, 0.06);
   }
-
   &:disabled {
     background: #fafafa;
     color: #999;
@@ -633,33 +417,5 @@ function handleDelete(row: SysUser) {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-}
-
-.radio-group {
-  display: flex;
-  gap: 16px;
-  padding-top: 6px;
-}
-
-.radio-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: #333;
-  cursor: pointer;
-
-  input[type="radio"] {
-    accent-color: #1a1a1a;
-  }
-}
-
-.modal-footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 24px;
-  border-top: 1px solid #f0f0f0;
 }
 </style>

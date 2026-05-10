@@ -60,7 +60,7 @@ function getIconComponent(name: string) {
       v-model:visible="visible"
       title="选择图标"
       width="680px"
-      :footer="null"
+      :footer="undefined"
     >
       <a-input
         v-model="searchValue"

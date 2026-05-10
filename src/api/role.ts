@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import type { ApiResponse, PageResult, SysRole, SysRoleQuery, SysRoleDTO, Option } from '@/types'
+import type { ApiResponse, PageResult, SysRole, SysRoleQuery, SysRoleDTO } from '@/types'
 
 /**
  * 获取角色分页列表

@@ -1,9 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import type { LoginUser } from '@/types'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref(localStorage.getItem('token') || '')
-  const userInfo = ref<Record<string, unknown>>({})
+  const userInfo = ref<LoginUser | null>(null)
 
   function setToken(val: string) {
     token.value = val
@@ -12,10 +13,11 @@ export const useUserStore = defineStore('user', () => {
 
   function clearToken() {
     token.value = ''
+    userInfo.value = null
     localStorage.removeItem('token')
   }
 
-  function setUserInfo(info: Record<string, unknown>) {
+  function setUserInfo(info: LoginUser) {
     userInfo.value = info
   }
 

@@ -1,78 +1,16 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { useUserStore, useMenuStore } from '@/stores'
-import { getMyMenuTree } from '@/api/menu'
-import { Modal } from '@arco-design/web-vue'
-import type { SysMenu } from '@/types'
+import { useLayout } from '@/hooks/useLayout'
 import { resolveIcon } from '@/utils/icon'
 
-const router = useRouter()
-const route = useRoute()
-const userStore = useUserStore()
-const menuStore = useMenuStore()
-
-const collapsed = ref(false)
-
-const menuItems = computed(() => {
-  return buildMenuItems(menuStore.menuTree)
-})
-
-function buildMenuItems(menus: SysMenu[]) {
-  return menus
-    .filter((m) => String(m.menuType) !== '3')
-    .map((menu) => {
-      const key = menu.path?.startsWith('/') ? menu.path : `/${menu.path}`
-      return {
-        key,
-        title: menu.menuName,
-        icon: menu.icon,
-        children: menu.children ? buildMenuItems(menu.children) : undefined,
-      }
-    })
-}
-
-const selectedKey = computed(() => route.path)
-
-async function loadMenus() {
-  if (!menuStore.menuTree.length) {
-    try {
-      const res = await getMyMenuTree()
-      if (res.code === 200) {
-        menuStore.setMenuTree(res.data)
-      }
-    } catch (_error) {
-      // ignore
-    }
-  }
-}
-
-function handleMenuClick(key: string) {
-  router.push(key)
-}
-
-function handleLogout() {
-  Modal.confirm({
-    title: '确认退出',
-    content: '确定要退出登录吗？',
-    okText: '确定',
-    cancelText: '取消',
-    onOk() {
-      userStore.clearToken()
-      menuStore.clearMenuTree()
-      router.push('/login')
-    },
-  })
-}
-
-const userNickname = computed(() => {
-  const info = userStore.userInfo as { nickname?: string; username?: string }
-  return info?.nickname || info?.username || '用户'
-})
-
-onMounted(() => {
-  loadMenus()
-})
+const {
+  collapsed,
+  menuItems,
+  selectedKey,
+  userNickname,
+  handleMenuClick,
+  handleLogout,
+  toggleCollapse,
+} = useLayout()
 </script>
 
 <template>
@@ -80,7 +18,7 @@ onMounted(() => {
     <!-- 侧边栏 -->
     <aside class="sidebar" :class="{ collapsed }">
       <div class="sidebar-header">
-        <div class="logo" @click="collapsed = !collapsed">
+        <div class="logo" @click="toggleCollapse">
           <div class="logo-icon">
             <svg viewBox="0 0 32 32" fill="none">
               <path d="M16 4L28 10V22L16 28L4 22V10L16 4Z" stroke="currentColor" stroke-width="2"/>
@@ -154,7 +92,7 @@ onMounted(() => {
     <div class="main">
       <header class="header">
         <div class="header-left">
-          <span class="page-title">{{ route.meta?.title || '首页' }}</span>
+          <span class="page-title">{{ $route.meta?.title || '首页' }}</span>
         </div>
         <div class="header-right">
           <div class="user-dropdown" @click="handleLogout">
@@ -179,7 +117,7 @@ onMounted(() => {
       <main class="content">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
-            <component :is="Component" :key="route.path" />
+            <component :is="Component" :key="$route.path" />
           </transition>
         </router-view>
       </main>
@@ -207,9 +145,7 @@ onMounted(() => {
   transition: width 0.3s ease;
   flex-shrink: 0;
 
-  &.collapsed {
-    width: 64px;
-  }
+  &.collapsed { width: 64px; }
 }
 
 .sidebar-header {
@@ -233,10 +169,7 @@ onMounted(() => {
   color: #1a1a1a;
   flex-shrink: 0;
 
-  svg {
-    width: 100%;
-    height: 100%;
-  }
+  svg { width: 100%; height: 100%; }
 }
 
 .logo-text {
@@ -264,20 +197,9 @@ onMounted(() => {
   color: #666;
   margin-bottom: 2px;
 
-  &:hover {
-    background: #f5f5f5;
-    color: #1a1a1a;
-  }
-
-  &.active {
-    background: #f5f5f5;
-    color: #1a1a1a;
-    font-weight: 500;
-  }
-
-  &.sub {
-    padding-left: 44px;
-  }
+  &:hover { background: #f5f5f5; color: #1a1a1a; }
+  &.active { background: #f5f5f5; color: #1a1a1a; font-weight: 500; }
+  &.sub { padding-left: 44px; }
 }
 
 .nav-icon {
@@ -288,15 +210,8 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
 
-  svg, :deep(svg) {
-    width: 100%;
-    height: 100%;
-  }
-
-  :deep(img) {
-    width: 18px;
-    height: 18px;
-  }
+  svg, :deep(svg) { width: 100%; height: 100%; }
+  :deep(img) { width: 18px; height: 18px; }
 }
 
 .nav-text {
@@ -304,9 +219,7 @@ onMounted(() => {
   white-space: nowrap;
 }
 
-.nav-group {
-  margin-bottom: 4px;
-}
+.nav-group { margin-bottom: 4px; }
 
 .nav-group-title {
   display: flex;
@@ -357,9 +270,7 @@ onMounted(() => {
   cursor: pointer;
   transition: all 0.2s ease;
 
-  &:hover {
-    background: #f5f5f5;
-  }
+  &:hover { background: #f5f5f5; }
 }
 
 .user-avatar {
@@ -367,10 +278,7 @@ onMounted(() => {
   height: 28px;
   color: #999;
 
-  svg {
-    width: 100%;
-    height: 2;
-  }
+  svg { width: 100%; height: 100%; }
 }
 
 .user-name {
@@ -384,10 +292,7 @@ onMounted(() => {
   color: #999;
   margin-left: 4px;
 
-  svg {
-    width: 100%;
-    height: 100%;
-  }
+  svg { width: 100%; height: 100%; }
 }
 
 .content {

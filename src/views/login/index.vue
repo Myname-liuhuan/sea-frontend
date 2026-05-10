@@ -1,53 +1,7 @@
 <script setup lang="ts">
-import { reactive } from 'vue'
-import { useRouter } from 'vue-router'
-import { Message } from '@arco-design/web-vue'
-import { useUserStore } from '@/stores'
-import { useMenuStore } from '@/stores/menu'
-import { login } from '@/api/auth'
-import { getLoginUser } from '@/api/user'
-import { getMyMenuTree } from '@/api/menu'
+import { useLoginPage } from '@/hooks/useLoginPage'
 
-const router = useRouter()
-const userStore = useUserStore()
-const menuStore = useMenuStore()
-
-const form = reactive({
-  username: '',
-  password: '',
-})
-const loading = ref(false)
-
-async function handleLogin() {
-  if (!form.username || !form.password) {
-    Message.warning('请输入用户名和密码')
-    return
-  }
-
-  loading.value = true
-  try {
-    const loginRes = await login({ username: form.username, password: form.password })
-    if (loginRes.code === 200) {
-      const { accessToken } = loginRes.data
-      userStore.setToken(accessToken)
-
-      const userRes = await getLoginUser(form.username)
-      if (userRes.code === 200) {
-        userStore.setUserInfo(userRes.data as unknown as Record<string, unknown>)
-      }
-
-      const menuRes = await getMyMenuTree()
-      if (menuRes.code === 200) {
-        menuStore.setMenuTree(menuRes.data)
-      }
-
-      Message.success('登录成功')
-      router.push('/')
-    }
-  } finally {
-    loading.value = false
-  }
-}
+const { form, loading, handleLogin } = useLoginPage()
 </script>
 
 <template>
@@ -128,14 +82,8 @@ async function handleLogin() {
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .login-brand {
@@ -149,10 +97,7 @@ async function handleLogin() {
   margin: 0 auto 16px;
   color: var(--color-primary, #1a1a1a);
 
-  svg {
-    width: 100%;
-    height: 100%;
-  }
+  svg { width: 100%; height: 100%; }
 }
 
 .brand-title {
@@ -200,9 +145,7 @@ async function handleLogin() {
   outline: none;
   transition: all 0.2s ease;
 
-  &::placeholder {
-    color: #bfbfbf;
-  }
+  &::placeholder { color: #bfbfbf; }
 
   &:focus {
     border-color: #1a1a1a;
@@ -226,14 +169,8 @@ async function handleLogin() {
   align-items: center;
   justify-content: center;
 
-  &:hover:not(:disabled) {
-    background: #333;
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
+  &:hover:not(:disabled) { background: #333; }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
 }
 
 .loading-spinner {
@@ -246,9 +183,7 @@ async function handleLogin() {
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 .login-footer {

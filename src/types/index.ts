@@ -9,8 +9,8 @@ export interface ApiResponse<T = unknown> {
 
 /** 分页查询参数 */
 export interface PageQuery {
-  pageNum: number
-  pageSize: number
+  pageNum?: number
+  pageSize?: number
   [key: string]: unknown
 }
 
@@ -68,9 +68,7 @@ export interface SysUser {
 }
 
 /** 用户查询参数 (对应后端 SysUserQueryParam) */
-export interface SysUserQuery {
-  pageNum?: number
-  pageSize?: number
+export interface SysUserQuery extends PageQuery {
   username?: string
   email?: string
   mobile?: string
@@ -143,6 +141,13 @@ export interface AssignMenusDTO {
 
 /** 菜单类型: 1=目录, 2=菜单, 3=按钮 */
 export type MenuType = string
+
+/** Tree node display format for Arco Tree component */
+export interface TreeNodeDisplay {
+  id: string
+  [key: string]: unknown
+  children?: TreeNodeDisplay[]
+}
 
 /** 菜单实体 */
 export interface SysMenu {

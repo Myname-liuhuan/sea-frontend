@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Modal } from '@arco-design/web-vue'
 
-const props = defineProps<{
+defineProps<{
   title?: string
   content?: string
 }>()
