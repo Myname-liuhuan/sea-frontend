@@ -76,7 +76,7 @@ const {
         <span class="title">角色列表</span>
         <span class="count">{{ pagination.total || 0 }} 条记录</span>
       </div>
-      <button class="btn btn-primary" @click="openAddModal">新增</button>
+      <button class="btn btn-primary" v-has-permi="'sys:role:add'" @click="openAddModal">新增</button>
     </div>
 
     <!-- 表格 -->
@@ -111,10 +111,10 @@ const {
             <td>{{ row.createTime }}</td>
             <td>
               <div class="table-actions">
-                <button class="action-btn" @click="openEditModal(row)">编辑</button>
-                <button class="action-btn" @click="openAssignUsersModal(row.id)">分配用户</button>
-                <button class="action-btn" @click="openAssignMenusModal(row.id)">分配权限</button>
-                <button class="action-btn danger" @click="handleDelete(row)">删除</button>
+                <button class="action-btn" v-has-permi="'sys:role:edit'" @click="openEditModal(row)">编辑</button>
+                <button class="action-btn" v-has-permi="'sys:role:assign_users'" @click="openAssignUsersModal(row.id)">分配用户</button>
+                <button class="action-btn" v-has-permi="'sys:role:assign_menus'" @click="openAssignMenusModal(row.id)">分配权限</button>
+                <button class="action-btn danger" v-has-permi="'sys:role:delete'" @click="handleDelete(row)">删除</button>
               </div>
             </td>
           </tr>

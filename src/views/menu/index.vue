@@ -29,7 +29,7 @@ const {
         <h1>菜单管理</h1>
         <p>配置系统菜单和权限</p>
       </div>
-      <button class="btn btn-primary" @click="openAddModal(0)">
+      <button class="btn btn-primary" v-has-permi="'sys:menu:add'" @click="openAddModal(0)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="12" y1="5" x2="12" y2="19"/>
           <line x1="5" y1="12" x2="19" y2="12"/>
@@ -71,9 +71,9 @@ const {
                 </span>
               </div>
               <div class="menu-actions">
-                <button v-if="slotProps.menuType !== MENU_TYPE.BUTTON" class="action-btn" @click.stop="openAddModal(slotProps.id)">新增</button>
-                <button class="action-btn" @click.stop="openEditModal(slotProps)">编辑</button>
-                <button class="action-btn danger" @click.stop="handleDelete(slotProps)">删除</button>
+                <button v-if="slotProps.menuType !== MENU_TYPE.BUTTON" v-has-permi="'sys:menu:add'" class="action-btn" @click.stop="openAddModal(slotProps.id)">新增</button>
+                <button class="action-btn" v-has-permi="'sys:menu:edit'" @click.stop="openEditModal(slotProps)">编辑</button>
+                <button class="action-btn danger" v-has-permi="'sys:menu:delete'" @click.stop="handleDelete(slotProps)">删除</button>
               </div>
             </div>
           </template>

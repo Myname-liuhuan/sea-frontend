@@ -56,7 +56,7 @@ const {
         <span class="title">用户列表</span>
         <span class="count">{{ pagination.total || 0 }} 条记录</span>
       </div>
-      <button class="btn btn-primary" @click="openAddModal">
+      <button class="btn btn-primary" v-has-permi="'sys:user:add'" @click="openAddModal">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="12" y1="5" x2="12" y2="19"/>
           <line x1="5" y1="12" x2="19" y2="12"/>
@@ -103,8 +103,8 @@ const {
             <td>{{ row.createTime }}</td>
             <td>
               <div class="table-actions">
-                <button class="action-btn" @click="openEditModal(row)">编辑</button>
-                <button class="action-btn danger" @click="handleDelete(row)">删除</button>
+                <button class="action-btn" v-has-permi="'sys:user:edit'" @click="openEditModal(row)">编辑</button>
+                <button class="action-btn danger" v-has-permi="'sys:user:delete'" @click="handleDelete(row)">删除</button>
               </div>
             </td>
           </tr>

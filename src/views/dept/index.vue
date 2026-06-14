@@ -33,7 +33,7 @@ const {
         <span class="title">部门列表</span>
         <span class="count">{{ treeData.length }} 个部门</span>
       </div>
-      <button class="btn btn-primary" @click="openAddModal(0)">
+      <button class="btn btn-primary" v-has-permi="'sys:dept:add'" @click="openAddModal(0)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="12" y1="5" x2="12" y2="19"/>
           <line x1="5" y1="12" x2="19" y2="12"/>
@@ -85,9 +85,9 @@ const {
               </td>
               <td>
                 <div class="table-actions">
-                  <button class="action-btn" @click="openAddModal(dept.id)">新增</button>
-                  <button class="action-btn" @click="openEditModal(dept)">编辑</button>
-                  <button class="action-btn danger" @click="handleDelete(dept)">删除</button>
+                  <button class="action-btn" v-has-permi="'sys:dept:add'" @click="openAddModal(dept.id)">新增</button>
+                  <button class="action-btn" v-has-permi="'sys:dept:edit'" @click="openEditModal(dept)">编辑</button>
+                  <button class="action-btn danger" v-has-permi="'sys:dept:delete'" @click="handleDelete(dept)">删除</button>
                 </div>
               </td>
             </tr>
