@@ -56,14 +56,14 @@ const {
           </tr>
         </thead>
         <tbody>
-          <tr v-if="loading">
-            <td colspan="7" style="text-align: center; padding: 48px">
-              <span>加载中...</span>
+          <tr v-if="loading" class="loading-row">
+            <td colspan="7">
+              <div class="loading-text">加载中...</div>
             </td>
           </tr>
-          <tr v-else-if="!treeData.length">
-            <td colspan="7" style="text-align: center; padding: 48px">
-              <span>暂无数据</span>
+          <tr v-else-if="!treeData.length" class="empty-row">
+            <td colspan="7">
+              <div class="empty-state">暂无数据</div>
             </td>
           </tr>
           <template v-else>
@@ -165,18 +165,18 @@ const {
 }
 
 .page-header {
-  margin-bottom: 24px;
+  margin-bottom: var(--space-lg);
 
   h1 {
     font-size: 22px;
     font-weight: 600;
-    color: #1a1a1a;
+    color: var(--text-primary);
     margin: 0 0 4px;
   }
 
   p {
     font-size: 14px;
-    color: #666;
+    color: var(--text-secondary);
     margin: 0;
   }
 }
@@ -185,22 +185,22 @@ const {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 0;
+  padding: var(--space-md) 0;
 }
 
 .toolbar-title {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: var(--space-sm);
 
-  .title { font-size: 16px; font-weight: 600; color: #1a1a1a; }
-  .count { font-size: 13px; color: #999; }
+  .title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+  .count { font-size: 13px; color: var(--text-tertiary); }
 }
 
 .table-wrapper {
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid #f0f0f0;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
   overflow: hidden;
 }
 
@@ -210,27 +210,28 @@ const {
   font-size: 13px;
 
   thead {
-    background: #fafafa;
+    background: var(--bg-primary);
     th {
       text-align: left;
       padding: 14px 16px;
       font-weight: 600;
-      color: #666;
-      border-bottom: 1px solid #f0f0f0;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-light);
+      &:last-child { text-align: center; }
     }
   }
 
   tbody tr {
-    &:hover { background: #fafafa; }
+    &:hover { background: var(--bg-primary); }
     td {
       padding: 12px 16px;
-      border-bottom: 1px solid #f5f5f5;
+      border-bottom: 1px solid var(--border-light);
     }
   }
 }
 
 .tree-indent {
-  color: #999;
+  color: var(--text-tertiary);
   margin-right: 4px;
 }
 
@@ -239,35 +240,38 @@ const {
   padding: 2px 8px;
   font-size: 12px;
   font-weight: 500;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 
   &.success {
     background: #f6ffed;
-    color: #52c41a;
+    color: var(--color-success);
     border: 1px solid #b7eb8f;
   }
   &.danger {
     background: #fff1f0;
-    color: #ff4d4f;
+    color: var(--color-danger);
     border: 1px solid #ffccc7;
   }
 }
 
 .table-actions {
   display: flex;
-  gap: 8px;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
 }
 
 .action-btn {
+  display: inline-block;
   padding: 4px 8px;
   font-size: 12px;
-  color: #1890ff;
+  color: var(--color-info);
   background: none;
   border: none;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   &:hover { background: #e6f7ff; }
-  &.danger { color: #ff4d4f; &:hover { background: #fff1f0; } }
+  &.danger { color: var(--color-danger); &:hover { background: #fff1f0; } }
 }
 
 .btn {
@@ -275,43 +279,43 @@ const {
   padding: 0 16px;
   font-size: 13px;
   font-weight: 500;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 6px;
   border: none;
-  transition: all 0.2s;
+  transition: all var(--transition-base);
 
   svg { width: 16px; height: 16px; }
   &:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 
 .btn-primary {
-  background: #1a1a1a;
-  color: #fff;
-  &:hover:not(:disabled) { background: #333; }
+  background: var(--color-primary);
+  color: var(--bg-secondary);
+  &:hover:not(:disabled) { background: var(--color-primary-light); }
 }
 
 .btn-default {
-  background: #fff;
-  color: #333;
-  border: 1px solid #e8e8e8;
-  &:hover { background: #fafafa; }
+  background: var(--bg-secondary);
+  color: var(--color-primary-light);
+  border: 1px solid var(--border-color);
+  &:hover { background: var(--bg-primary); }
 }
 
 .form-group {
-  margin-bottom: 16px;
+  margin-bottom: var(--space-md);
 
   label {
     display: block;
     font-size: 13px;
-    color: #666;
+    color: var(--text-secondary);
     font-weight: 500;
     margin-bottom: 6px;
   }
 
-  .required { color: #ff4d4f; }
+  .required { color: var(--color-danger); }
 }
 
 .form-input, .form-select {
@@ -319,25 +323,25 @@ const {
   height: 36px;
   padding: 0 12px;
   font-size: 13px;
-  border: 1px solid #e8e8e8;
-  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
   outline: none;
 
   &:focus {
-    border-color: #1a1a1a;
-    box-shadow: 0 0 0 2px rgba(26, 26, 26, 0.06);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.06);
   }
 }
 
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: var(--space-md);
 }
 
 .radio-group {
   display: flex;
-  gap: 16px;
+  gap: var(--space-md);
   padding-top: 6px;
 }
 
@@ -346,9 +350,19 @@ const {
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: #333;
+  color: var(--color-primary-light);
   cursor: pointer;
 
-  input[type="radio"] { accent-color: #1a1a1a; }
+  input[type="radio"] { accent-color: var(--color-primary); }
+}
+
+.loading-row td, .empty-row td {
+  text-align: center;
+  padding: 48px 16px;
+}
+
+.loading-text, .empty-state {
+  color: var(--text-tertiary);
+  font-size: 13px;
 }
 </style>

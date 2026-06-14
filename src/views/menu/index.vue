@@ -179,18 +179,18 @@ export default { components: { IconPicker } }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: var(--space-lg);
 
   h1 {
     font-size: 24px;
     font-weight: 600;
-    color: #1a1a1a;
+    color: var(--text-primary);
     margin: 0 0 8px;
   }
 
   p {
     font-size: 14px;
-    color: #666;
+    color: var(--text-secondary);
     margin: 0;
   }
 }
@@ -200,13 +200,13 @@ export default { components: { IconPicker } }
   padding: 0 16px;
   font-size: 13px;
   font-weight: 500;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   border: none;
   display: flex;
   align-items: center;
   gap: 6px;
-  transition: all 0.2s;
+  transition: all var(--transition-base);
 
   svg {
     width: 16px;
@@ -220,35 +220,35 @@ export default { components: { IconPicker } }
 }
 
 .btn-primary {
-  background: #1a1a1a;
-  color: #fff;
-  &:hover:not(:disabled) { background: #333; }
+  background: var(--color-primary);
+  color: var(--bg-secondary);
+  &:hover:not(:disabled) { background: var(--color-primary-light); }
 }
 
 .btn-default {
-  background: #fff;
-  color: #333;
-  border: 1px solid #e8e8e8;
-  &:hover { background: #fafafa; }
+  background: var(--bg-secondary);
+  color: var(--color-primary-light);
+  border: 1px solid var(--border-color);
+  &:hover { background: var(--bg-primary); }
 }
 
 .menu-container {
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid #f0f0f0;
-  padding: 24px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-light);
+  padding: var(--space-lg);
 }
 
 .loading-state, .empty-state {
   text-align: center;
-  padding: 48px;
-  color: #999;
+  padding: var(--space-2xl);
+  color: var(--text-tertiary);
 
   .loading-spinner {
     width: 24px;
     height: 24px;
-    border: 2px solid #f0f0f0;
-    border-top-color: #1a1a1a;
+    border: 2px solid var(--border-light);
+    border-top-color: var(--color-primary);
     border-radius: 50%;
     margin: 0 auto 12px;
     animation: spin 0.8s linear infinite;
@@ -262,29 +262,29 @@ export default { components: { IconPicker } }
 .menu-item {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: var(--space-lg);
   padding: 8px 0;
 }
 
 .menu-info {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-sm);
   min-width: 200px;
 }
 
 .menu-name {
   font-weight: 500;
-  color: #1a1a1a;
+  color: var(--text-primary);
 }
 
 .menu-type-tag {
   font-size: 11px;
   padding: 2px 6px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-weight: 500;
 
-  &.type-1 { background: #f6ffed; color: #52c41a; }
+  &.type-1 { background: #f6ffed; color: var(--color-success); }
   &.type-2 { background: #fff7e6; color: #fa8c16; }
 }
 
@@ -292,9 +292,9 @@ export default { components: { IconPicker } }
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--space-md);
   font-size: 12px;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
 .menu-path, .menu-perms {
@@ -305,15 +305,16 @@ export default { components: { IconPicker } }
 }
 
 .menu-status {
-  &.show { color: #52c41a; }
-  &.hide { color: #ff4d4f; }
+  &.show { color: var(--color-success); }
+  &.hide { color: var(--color-danger); }
 }
 
 .menu-actions {
   display: flex;
-  gap: 8px;
+  gap: 4px;
+  justify-content: center;
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity var(--transition-base);
 
   .menu-item:hover & {
     opacity: 1;
@@ -323,28 +324,28 @@ export default { components: { IconPicker } }
 .action-btn {
   padding: 4px 8px;
   font-size: 12px;
-  color: #1890ff;
+  color: var(--color-info);
   background: none;
   border: none;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 
   &:hover { background: #e6f7ff; }
-  &.danger { color: #ff4d4f; &:hover { background: #fff1f0; } }
+  &.danger { color: var(--color-danger); &:hover { background: #fff1f0; } }
 }
 
 .form-group {
-  margin-bottom: 16px;
+  margin-bottom: var(--space-md);
 
   label {
     display: block;
     font-size: 13px;
-    color: #666;
+    color: var(--text-secondary);
     font-weight: 500;
     margin-bottom: 6px;
   }
 
-  .required { color: #ff4d4f; }
+  .required { color: var(--color-danger); }
 }
 
 .form-input, .form-select {
@@ -352,19 +353,19 @@ export default { components: { IconPicker } }
   height: 36px;
   padding: 0 12px;
   font-size: 13px;
-  border: 1px solid #e8e8e8;
-  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
   outline: none;
 
   &:focus {
-    border-color: #1a1a1a;
-    box-shadow: 0 0 0 2px rgba(26, 26, 26, 0.06);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.06);
   }
 }
 
 .radio-group {
   display: flex;
-  gap: 16px;
+  gap: var(--space-md);
   padding-top: 6px;
 }
 
@@ -373,9 +374,9 @@ export default { components: { IconPicker } }
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: #333;
+  color: var(--color-primary-light);
   cursor: pointer;
 
-  input[type="radio"] { accent-color: #1a1a1a; }
+  input[type="radio"] { accent-color: var(--color-primary); }
 }
 </style>
