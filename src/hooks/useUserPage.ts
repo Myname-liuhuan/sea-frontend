@@ -1,4 +1,4 @@
-import { reactive, ref, computed } from 'vue'
+import { reactive, ref } from 'vue'
 import { Message, Modal } from '@arco-design/web-vue'
 import { useTable } from '@/hooks/useTable'
 import { getUserPage, addUser, updateUser, deleteUser } from '@/api/user'
@@ -123,13 +123,7 @@ export function useUserPage() {
     })
   }
 
-  const totalPages = computed(() => {
-    return Math.ceil(pagination.total / pagination.pageSize) || 1
-  })
-
-  function handlePageSizeChange(event: Event) {
-    const target = event.target as HTMLSelectElement
-    const pageSize = Number(target.value)
+  function handlePageSizeChange(pageSize: number) {
     onPageSizeChange(pageSize)
   }
 
@@ -146,7 +140,6 @@ export function useUserPage() {
     modalLoading,
     isEdit,
     formData,
-    totalPages,
     handleSearch,
     handleReset,
     openAddModal,

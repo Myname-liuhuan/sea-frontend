@@ -1,6 +1,17 @@
 <script setup lang="ts">
 import { useDeptPage } from '@/hooks/useDeptPage'
 import { ENTITY_STATUS } from '@/constants'
+import DataTable, { type DataTableColumn } from '@/components/DataTable.vue'
+
+const deptColumns: DataTableColumn[] = [
+  { key: 'name', title: '部门名称', width: '220px' },
+  { key: 'orderNum', title: '排序', width: '80px' },
+  { key: 'leader', title: '负责人', width: '120px' },
+  { key: 'mobile', title: '联系电话', width: '140px' },
+  { key: 'email', title: '邮箱', width: '180px' },
+  { key: 'status', title: '状态', width: '80px' },
+  { key: 'action', title: '操作', width: '180px' },
+]
 
 const {
   loading,
@@ -43,57 +54,35 @@ const {
     </div>
 
     <div class="table-wrapper">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th style="width: 200px">部门名称</th>
-            <th style="width: 80px">排序</th>
-            <th style="width: 120px">负责人</th>
-            <th style="width: 140px">联系电话</th>
-            <th style="width: 180px">邮箱</th>
-            <th style="width: 80px">状态</th>
-            <th style="width: 150px">操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="loading" class="loading-row">
-            <td colspan="7">
-              <div class="loading-text">加载中...</div>
-            </td>
-          </tr>
-          <tr v-else-if="!treeData.length" class="empty-row">
-            <td colspan="7">
-              <div class="empty-state">暂无数据</div>
-            </td>
-          </tr>
-          <template v-else>
-            <tr v-for="{ dept, level } in flatData()" :key="dept.id">
-              <td>
-                <span :style="{ paddingLeft: (level * 20) + 'px' }">
-                  <span v-if="level > 0" class="tree-indent">└─</span>
-                  {{ dept.name }}
-                </span>
-              </td>
-              <td>{{ dept.orderNum }}</td>
-              <td>{{ dept.leader || '-' }}</td>
-              <td>{{ dept.mobile || '-' }}</td>
-              <td>{{ dept.email || '-' }}</td>
-              <td>
-                <span class="status-tag" :class="dept.status === ENTITY_STATUS.ACTIVE ? 'success' : 'danger'">
-                  {{ formatStatus(dept.status) }}
-                </span>
-              </td>
-              <td>
-                <div class="table-actions">
-                  <button class="action-btn" v-has-permi="'sys:dept:add'" @click="openAddModal(dept.id)">新增</button>
-                  <button class="action-btn" v-has-permi="'sys:dept:edit'" @click="openEditModal(dept)">编辑</button>
-                  <button class="action-btn danger" v-has-permi="'sys:dept:delete'" @click="handleDelete(dept)">删除</button>
-                </div>
-              </td>
-            </tr>
-          </template>
-        </tbody>
-      </table>
+      <DataTable
+        :columns="deptColumns"
+        :data="flatData()"
+        :loading="loading"
+        :row-key="(row: any) => row.dept.id"
+      >
+        <template #cell-name="{ row }">
+          <span :style="{ paddingLeft: ((row as any).level * 20) + 'px' }">
+            <span v-if="(row as any).level > 0" class="tree-indent">└─</span>
+            {{ (row as any).dept.name }}
+          </span>
+        </template>
+        <template #cell-orderNum="{ row }">{{ (row as any).dept.orderNum }}</template>
+        <template #cell-leader="{ row }">{{ (row as any).dept.leader || '-' }}</template>
+        <template #cell-mobile="{ row }">{{ (row as any).dept.mobile || '-' }}</template>
+        <template #cell-email="{ row }">{{ (row as any).dept.email || '-' }}</template>
+        <template #cell-status="{ row }">
+          <span class="status-tag" :class="(row as any).dept.status === ENTITY_STATUS.ACTIVE ? 'success' : 'danger'">
+            {{ formatStatus((row as any).dept.status) }}
+          </span>
+        </template>
+        <template #cell-action="{ row }">
+          <div class="table-actions">
+            <button class="action-btn" v-has-permi="'sys:dept:add'" @click="openAddModal((row as any).dept.id)">新增</button>
+            <button class="action-btn" v-has-permi="'sys:dept:edit'" @click="openEditModal((row as any).dept)">编辑</button>
+            <button class="action-btn danger" v-has-permi="'sys:dept:delete'" @click="handleDelete((row as any).dept)">删除</button>
+          </div>
+        </template>
+      </DataTable>
     </div>
 
     <!-- 弹窗 -->
@@ -204,74 +193,9 @@ const {
   overflow: hidden;
 }
 
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-
-  thead {
-    background: var(--bg-primary);
-    th {
-      text-align: left;
-      padding: 14px 16px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      border-bottom: 1px solid var(--border-light);
-      &:last-child { text-align: center; }
-    }
-  }
-
-  tbody tr {
-    &:hover { background: var(--bg-primary); }
-    td {
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border-light);
-    }
-  }
-}
-
 .tree-indent {
   color: var(--text-tertiary);
   margin-right: 4px;
-}
-
-.status-tag {
-  display: inline-block;
-  padding: 2px 8px;
-  font-size: 12px;
-  font-weight: 500;
-  border-radius: var(--radius-sm);
-
-  &.success {
-    background: #f6ffed;
-    color: var(--color-success);
-    border: 1px solid #b7eb8f;
-  }
-  &.danger {
-    background: #fff1f0;
-    color: var(--color-danger);
-    border: 1px solid #ffccc7;
-  }
-}
-
-.table-actions {
-  display: flex;
-  justify-content: center;
-  gap: 4px;
-  width: 100%;
-}
-
-.action-btn {
-  display: inline-block;
-  padding: 4px 8px;
-  font-size: 12px;
-  color: var(--color-info);
-  background: none;
-  border: none;
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-  &:hover { background: #e6f7ff; }
-  &.danger { color: var(--color-danger); &:hover { background: #fff1f0; } }
 }
 
 .btn {

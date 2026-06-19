@@ -1,6 +1,16 @@
 <script setup lang="ts">
 import { useRolePage } from '@/hooks/useRolePage'
 import { ENTITY_STATUS, PAGE_SIZE_OPTIONS } from '@/constants'
+import DataTable, { type DataTableColumn } from '@/components/DataTable.vue'
+
+const roleColumns: DataTableColumn[] = [
+  { key: 'roleName', title: '角色名称', width: '160px' },
+  { key: 'roleCode', title: '权限字符', width: '140px' },
+  { key: 'roleDesc', title: '角色描述', width: 'auto' },
+  { key: 'status', title: '状态', width: '100px' },
+  { key: 'createTime', title: '创建时间', width: '180px' },
+  { key: 'action', title: '操作', width: '240px' },
+]
 
 const {
   searchForm,
@@ -34,7 +44,6 @@ const {
   openAssignMenusModal,
   handleAssignMenus,
   formatStatus,
-  totalPages,
   handlePageSizeChange,
   closeModal,
   closeUserModal,
@@ -80,59 +89,36 @@ const {
     </div>
 
     <!-- 表格 -->
-    <div class="table-wrapper">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>角色名称</th>
-            <th>权限字符</th>
-            <th>角色描述</th>
-            <th>状态</th>
-            <th>创建时间</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="loading" class="loading-row">
-            <td colspan="6"><div class="loading-text">加载中...</div></td>
-          </tr>
-          <tr v-else-if="!dataSource.length" class="empty-row">
-            <td colspan="6"><div class="empty-state">暂无数据</div></td>
-          </tr>
-          <tr v-for="row in dataSource" :key="row.id">
-            <td>{{ row.roleName }}</td>
-            <td>{{ row.roleCode }}</td>
-            <td>{{ row.roleDesc || '-' }}</td>
-            <td>
-              <span class="status-tag" :class="row.status === ENTITY_STATUS.ACTIVE ? 'success' : 'danger'">
-                {{ formatStatus(row.status) }}
-              </span>
-            </td>
-            <td>{{ row.createTime }}</td>
-            <td>
-              <div class="table-actions">
-                <button class="action-btn" v-has-permi="'sys:role:edit'" @click="openEditModal(row)">编辑</button>
-                <button class="action-btn" v-has-permi="'sys:role:assign_users'" @click="openAssignUsersModal(row.id)">分配用户</button>
-                <button class="action-btn" v-has-permi="'sys:role:assign_menus'" @click="openAssignMenusModal(row.id)">分配权限</button>
-                <button class="action-btn danger" v-has-permi="'sys:role:delete'" @click="handleDelete(row)">删除</button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- 分页 -->
-    <div class="pagination-wrapper">
-      <div class="pagination-info">共 {{ pagination.total }} 条</div>
-      <div class="pagination-controls">
-        <select :value="pagination.pageSize" @change="handlePageSizeChange" class="page-size-select">
-          <option v-for="size in PAGE_SIZE_OPTIONS" :key="size" :value="size">{{ size }} 条/页</option>
-        </select>
-        <button :disabled="pagination.current === 1" @click="onPageChange(pagination.current - 1)">上一页</button>
-        <button :disabled="pagination.current >= totalPages" @click="onPageChange(pagination.current + 1)">下一页</button>
-      </div>
-    </div>
+    <DataTable
+      :columns="roleColumns"
+      :data="dataSource"
+      :loading="loading"
+      :total="pagination.total"
+      :page-size="pagination.pageSize"
+      :current="pagination.current"
+      :page-size-options="[...PAGE_SIZE_OPTIONS]"
+      row-key="id"
+      @page-change="onPageChange"
+      @page-size-change="handlePageSizeChange"
+    >
+      <template #cell-roleName="{ row }">{{ row.roleName }}</template>
+      <template #cell-roleCode="{ row }">{{ row.roleCode }}</template>
+      <template #cell-roleDesc="{ row }">{{ row.roleDesc || '-' }}</template>
+      <template #cell-status="{ row }">
+        <span class="status-tag" :class="row.status === ENTITY_STATUS.ACTIVE ? 'success' : 'danger'">
+          {{ formatStatus(row.status) }}
+        </span>
+      </template>
+      <template #cell-createTime="{ row }">{{ row.createTime }}</template>
+      <template #cell-action="{ row }">
+        <div class="table-actions">
+          <button class="action-btn" v-has-permi="'sys:role:edit'" @click="openEditModal(row)">编辑</button>
+          <button class="action-btn" v-has-permi="'sys:role:assign_users'" @click="openAssignUsersModal(row.id)">分配用户</button>
+          <button class="action-btn" v-has-permi="'sys:role:assign_menus'" @click="openAssignMenusModal(row.id)">分配权限</button>
+          <button class="action-btn danger" v-has-permi="'sys:role:delete'" @click="handleDelete(row)">删除</button>
+        </div>
+      </template>
+    </DataTable>
 
     <!-- 新增/编辑弹窗 -->
     <div v-if="modalVisible" class="modal-mask" @click.self="closeModal">
@@ -324,118 +310,50 @@ const {
   .count { font-size: 13px; color: var(--text-tertiary); }
 }
 
-.table-wrapper {
-  background: var(--bg-secondary);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-light);
-  overflow: hidden;
-}
+.form-group {
+  margin-bottom: var(--space-md);
 
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-
-  thead {
-    background: var(--bg-primary);
-    th {
-      text-align: left;
-      padding: 14px 16px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      border-bottom: 1px solid var(--border-light);
-      &:last-child { text-align: center; }
-    }
-  }
-
-  tbody tr {
-    &:hover { background: var(--bg-primary); }
-    td {
-      padding: 14px 16px;
-      border-bottom: 1px solid var(--border-light);
-    }
-  }
-}
-
-.status-tag {
-  display: inline-block;
-  padding: 2px 8px;
-  font-size: 12px;
-  font-weight: 500;
-  border-radius: var(--radius-sm);
-
-  &.success {
-    background: #f6ffed;
-    color: var(--color-success);
-    border: 1px solid #b7eb8f;
-  }
-  &.danger {
-    background: #fff1f0;
-    color: var(--color-danger);
-    border: 1px solid #ffccc7;
-  }
-}
-
-.table-actions {
-  display: flex;
-  justify-content: center;
-  gap: 4px;
-  width: 100%;
-}
-
-.action-btn {
-  display: inline-block;
-  padding: 4px 8px;
-  font-size: 12px;
-  color: var(--color-info);
-  background: none;
-  border: none;
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-  &:hover { background: #e6f7ff; }
-  &.danger { color: var(--color-danger); &:hover { background: #fff1f0; } }
-}
-
-.empty-state, .loading-text {
-  text-align: center;
-  padding: 48px 16px;
-  color: var(--text-tertiary);
-  font-size: 13px;
-}
-
-.pagination-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-md) 0;
-}
-
-.pagination-info { font-size: 13px; color: var(--text-secondary); }
-
-.pagination-controls {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-
-  button {
-    height: 32px;
-    padding: 0 12px;
+  label {
+    display: block;
     font-size: 13px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    &:hover:not(:disabled) { background: var(--bg-primary); }
-    &:disabled { opacity: 0.5; cursor: not-allowed; }
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 6px;
   }
+
+  .required { color: var(--color-danger); }
 }
 
-.page-size-select {
-  height: 32px;
-  padding: 0 8px;
+.form-input {
+  width: 100%;
+  height: 36px;
+  padding: 0 12px;
+  font-size: 13px;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
+  outline: none;
+
+  &:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.06);
+  }
+}
+
+.radio-group {
+  display: flex;
+  gap: var(--space-md);
+  padding-top: 6px;
+}
+
+.radio-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+
+  input[type="radio"] { accent-color: var(--color-primary); }
 }
 
 .user-list {

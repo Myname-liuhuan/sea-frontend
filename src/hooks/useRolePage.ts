@@ -1,4 +1,4 @@
-import { reactive, ref, computed } from 'vue'
+import { reactive, ref } from 'vue'
 import { useTable } from '@/hooks/useTable'
 import {
   getRoleList,
@@ -62,8 +62,6 @@ export function useRolePage() {
   const isEdit = ref(false)
   const formData = reactive<SysRoleDTO>({ ...DEFAULT_FORM })
   const formRef = ref()
-
-  const totalPages = computed(() => Math.ceil(pagination.total / pagination.pageSize))
 
   function handleSearch() {
     const { status, roleName, roleCode } = searchForm
@@ -139,9 +137,7 @@ export function useRolePage() {
     Object.assign(formData, DEFAULT_FORM)
   }
 
-  function handlePageSizeChange(event: Event) {
-    const target = event.target as HTMLSelectElement
-    const size = Number(target.value)
+  function handlePageSizeChange(size: number) {
     if (size > 0) {
       pagination.pageSize = size
       pagination.current = 1
@@ -282,7 +278,6 @@ export function useRolePage() {
     openAssignMenusModal,
     handleAssignMenus,
     formatStatus: formatEntityStatus,
-    totalPages,
     handlePageSizeChange,
     closeModal,
     closeUserModal,

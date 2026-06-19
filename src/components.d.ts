@@ -16,6 +16,7 @@ declare module 'vue' {
     AModal: typeof import('@arco-design/web-vue')['Modal']
     ATree: typeof import('@arco-design/web-vue')['Tree']
     ConfirmModal: typeof import('./components/ConfirmModal.vue')['default']
+    DataTable: typeof import('./components/DataTable.vue')['default']
     IconPicker: typeof import('./components/IconPicker.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
