@@ -1,12 +1,14 @@
 <script setup lang="ts" generic="T extends Record<string, unknown>">
 import { computed } from 'vue'
 
-/** 列定义：key / title / width / align / ellipsis */
+/** 列定义：key / title / width / align / ellipsis / sticky */
 export interface DataTableColumn {
   key: string
   title: string
   width: string
   align?: 'left' | 'center' | 'right'
+  /** 固定在右侧（横向滚动时钉住）；默认 key === 'action' 自动启用 */
+  sticky?: boolean
 }
 
 interface Props {
@@ -44,6 +46,11 @@ function getRowKey(row: T): string | number {
 
 const totalPages = computed(() => Math.max(1, Math.ceil((props.total ?? 0) / props.pageSize)))
 const showPagination = computed(() => props.total !== undefined)
+
+/** 是否固定列：sticky 显式指定优先；未指定时 key === 'action' 自动启用 */
+function isStickyCol(col: DataTableColumn): boolean {
+  return col.sticky ?? col.key === 'action'
+}
 </script>
 
 <template>
@@ -55,6 +62,7 @@ const showPagination = computed(() => props.total !== undefined)
             <th
               v-for="col in columns"
               :key="col.key"
+              :class="{ 'col-sticky': isStickyCol(col) }"
               :style="{ width: col.width, textAlign: col.align ?? (col.key === 'action' ? 'center' : 'left') }"
             >
               {{ col.title }}
@@ -76,6 +84,7 @@ const showPagination = computed(() => props.total !== undefined)
             <td
               v-for="col in columns"
               :key="col.key"
+              :class="{ 'col-sticky': isStickyCol(col) }"
               :style="{ textAlign: col.align ?? 'left' }"
             >
               <slot :name="`cell-${col.key}`" :row="row">
@@ -109,7 +118,8 @@ const showPagination = computed(() => props.total !== undefined)
   background: var(--bg-secondary);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-light);
-  overflow: hidden;
+  // 列宽总和可能超过容器 → 横向滚动兜底，避免操作列被裁掉
+  overflow-x: auto;
 }
 
 .data-table {
@@ -140,6 +150,23 @@ const showPagination = computed(() => props.total !== undefined)
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+  }
+
+  // 固定列：横向滚动时钉在容器右侧
+  .col-sticky {
+    position: sticky;
+    right: 0;
+    z-index: 1;
+    background: var(--bg-secondary);
+    // 左侧投影暗示"这一列在浮动"
+    box-shadow: -1px 0 0 var(--border-light);
+  }
+  thead .col-sticky {
+    background: var(--bg-primary);
+    z-index: 2; // 表头要压在 td 之上
+  }
+  tbody tr:hover .col-sticky {
+    background: var(--bg-primary);
   }
 }
 
