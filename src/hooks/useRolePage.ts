@@ -66,7 +66,12 @@ export function useRolePage() {
   const totalPages = computed(() => Math.ceil(pagination.total / pagination.pageSize))
 
   function handleSearch() {
-    fetchData({ ...searchForm } as Partial<SysRoleQuery>)
+    const { status, roleName, roleCode } = searchForm
+    const params: Partial<SysRoleQuery> = {}
+    if (roleName) params.roleName = roleName
+    if (roleCode) params.roleCode = roleCode
+    if (status !== '') params.status = status
+    fetchData(params)
   }
 
   function handleReset() {
