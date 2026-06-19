@@ -18,7 +18,7 @@ export function getAllMenuTree(): Promise<ApiResponse<SysMenu[]>> {
 /**
  * 获取菜单详情
  */
-export function getMenu(menuId: number): Promise<ApiResponse<SysMenu>> {
+export function getMenu(menuId: string | number): Promise<ApiResponse<SysMenu>> {
   return request.get(`/system/sysMenu/${menuId}`)
 }
 
@@ -39,7 +39,7 @@ export function updateMenu(data: SysMenuDTO): Promise<ApiResponse<void>> {
 /**
  * 删除菜单
  */
-export function deleteMenu(menuId: number): Promise<ApiResponse<void>> {
+export function deleteMenu(menuId: string | number): Promise<ApiResponse<void>> {
   return request.delete(`/system/sysMenu/${menuId}`)
 }
 

@@ -118,7 +118,7 @@ export function useMenuPage() {
     }
   }
 
-  function confirmDelete(menuId: number, menuName: string) {
+  function confirmDelete(menuId: string | number, menuName: string) {
     Modal.warning({
       title: '确认删除',
       content: `确定要删除菜单 "${menuName}" 吗？`,

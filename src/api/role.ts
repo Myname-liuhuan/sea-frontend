@@ -32,7 +32,7 @@ export function updateRole(data: SysRoleDTO): Promise<ApiResponse<void>> {
 /**
  * 分配用户给角色
  */
-export function assignUsers(data: { roleId: number; userIds: string[] }): Promise<ApiResponse<void>> {
+export function assignUsers(data: { roleId: string | number; userIds: string[] }): Promise<ApiResponse<void>> {
   return request.post('/system/sysRole/editRoleUserRelation', {
     roleId: data.roleId,
     userIdList: data.userIds.map(Number)
@@ -42,18 +42,18 @@ export function assignUsers(data: { roleId: number; userIds: string[] }): Promis
 /**
  * 分配菜单权限给角色
  */
-export function assignMenus(data: { roleId: number; menuIds: string[] }): Promise<ApiResponse<void>> {
+export function assignMenus(data: { roleId: string | number; menuIds: string[] }): Promise<ApiResponse<void>> {
   return request.post('/system/sysRole/editRoleMenuRelation', {
     roleId: data.roleId,
     menuIdList: data.menuIds.map(Number)
   })
 }
 
-export function getRoleMenuIds(roleId: number): Promise<ApiResponse<string[]>> {
+export function getRoleMenuIds(roleId: string | number): Promise<ApiResponse<string[]>> {
   return request.get(`/system/sysRole/menuIds/${roleId}`)
 }
 
-export function getRoleUserIds(roleId: number): Promise<ApiResponse<string[]>> {
+export function getRoleUserIds(roleId: string | number): Promise<ApiResponse<string[]>> {
   return request.get(`/system/sysRole/userIds/${roleId}`)
 }
 

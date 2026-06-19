@@ -152,9 +152,9 @@ export function useRolePage() {
   const userLoading = ref(false)
   const allUsers = ref<UserOption[]>([])
   const selectedUserIds = ref<string[]>([])
-  let currentRoleIdForUser = 0
+  let currentRoleIdForUser: string | number | null = null
 
-  async function openAssignUsersModal(roleId: number) {
+  async function openAssignUsersModal(roleId: string | number) {
     currentRoleIdForUser = roleId
     userModalVisible.value = true
     userLoading.value = true
@@ -174,6 +174,7 @@ export function useRolePage() {
   }
 
   async function handleAssignUsers() {
+    if (currentRoleIdForUser === null) return
     userModalLoading.value = true
     try {
       const res = await assignUsers({
@@ -203,9 +204,9 @@ export function useRolePage() {
   const menuTree = ref<TreeNodeDisplay[]>([])
   const menuExpandedKeys = ref<string[]>([])
   const selectedMenuIds = ref<string[]>([])
-  let currentRoleIdForMenu = 0
+  let currentRoleIdForMenu: string | number | null = null
 
-  async function openAssignMenusModal(roleId: number) {
+  async function openAssignMenusModal(roleId: string | number) {
     currentRoleIdForMenu = roleId
     menuModalVisible.value = true
     menuLoading.value = true
@@ -223,6 +224,7 @@ export function useRolePage() {
   }
 
   async function handleAssignMenus() {
+    if (currentRoleIdForMenu === null) return
     menuModalLoading.value = true
     try {
       const res = await assignMenus({

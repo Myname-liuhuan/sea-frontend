@@ -40,7 +40,7 @@ export interface LoginResult {
 
 /** 登录用户信息 */
 export interface LoginUser {
-  id: number
+  id: string | number
   username: string
   password?: string
   version?: number
@@ -52,7 +52,7 @@ export interface LoginUser {
 
 /** 用户视图对象 (对应后端 SysUserVO) */
 export interface SysUser {
-  id: number
+  id: string | number
   username: string
   email?: string
   mobile?: string
@@ -62,8 +62,8 @@ export interface SysUser {
   bannedUntil?: string
   createTime?: string
   updateTime?: string
-  createBy?: number
-  updateBy?: number
+  createBy?: string | number
+  updateBy?: string | number
   delFlag?: number
 }
 
@@ -80,7 +80,7 @@ export interface SysUserQuery extends PageQuery {
 
 /** 用户表单数据 (对应后端 SysUserDTO) */
 export interface SysUserDTO {
-  id?: number
+  id?: string | number
   username: string
   email: string
   mobile?: string
@@ -93,7 +93,7 @@ export interface SysUserDTO {
 
 /** 角色实体 */
 export interface SysRole {
-  id: number
+  id: string | number
   roleName: string
   roleCode: string
   roleDesc?: string
@@ -101,8 +101,8 @@ export interface SysRole {
   status: string
   createTime?: string
   updateTime?: string
-  createBy?: number
-  updateBy?: number
+  createBy?: string | number
+  updateBy?: string | number
   delFlag?: number
 }
 
@@ -117,7 +117,7 @@ export interface SysRoleQuery extends PageQuery {
 
 /** 角色表单数据 */
 export interface SysRoleDTO {
-  id?: number
+  id?: string | number
   roleName: string
   roleCode: string
   roleDesc?: string
@@ -127,14 +127,14 @@ export interface SysRoleDTO {
 
 /** 分配用户请求 */
 export interface AssignUsersDTO {
-  roleId: number
-  userIds: number[]
+  roleId: string | number
+  userIds: (string | number)[]
 }
 
 /** 分配菜单请求 */
 export interface AssignMenusDTO {
-  roleId: number
-  menuIds: number[]
+  roleId: string | number
+  menuIds: (string | number)[]
 }
 
 // ========== 菜单类型 ==========
@@ -151,9 +151,9 @@ export interface TreeNodeDisplay {
 
 /** 菜单实体 */
 export interface SysMenu {
-  id: number
-  menuId: number
-  parentId: number
+  id: string | number
+  menuId: string | number
+  parentId: string | number
   menuName: string
   menuType: string
   path: string
@@ -164,8 +164,8 @@ export interface SysMenu {
   orderNum: number
   createTime?: string
   updateTime?: string
-  createBy?: number
-  updateBy?: number
+  createBy?: string | number
+  updateBy?: string | number
   delFlag?: number
   children?: SysMenu[]
 }
@@ -179,8 +179,8 @@ export interface SysMenuQuery extends PageQuery {
 
 /** 菜单表单数据 */
 export interface SysMenuDTO {
-  id?: number
-  parentId: number
+  id?: string | number
+  parentId: string | number
   menuName: string
   menuType: string
   path: string

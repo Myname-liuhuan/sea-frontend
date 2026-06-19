@@ -25,7 +25,7 @@ export function getUserPage(params: SysUserQuery): Promise<ApiResponse<PageResul
 /**
  * 获取用户详情
  */
-export function getUser(userId: number): Promise<ApiResponse<SysUser>> {
+export function getUser(userId: string | number): Promise<ApiResponse<SysUser>> {
   return request.get(`/system/sysUser/${userId}`)
 }
 
@@ -46,21 +46,21 @@ export function updateUser(data: SysUserDTO): Promise<ApiResponse<void>> {
 /**
  * 删除用户
  */
-export function deleteUser(userId: number): Promise<ApiResponse<void>> {
+export function deleteUser(userId: string | number): Promise<ApiResponse<void>> {
   return request.delete(`/system/sysUser/${userId}`)
 }
 
 /**
  * 修改用户状态
  */
-export function changeUserStatus(userId: number, status: string): Promise<ApiResponse<void>> {
+export function changeUserStatus(userId: string | number, status: string): Promise<ApiResponse<void>> {
   return request.put('/system/sysUser/changeStatus', null, { params: { userId, status } })
 }
 
 /**
  * 重置用户密码
  */
-export function resetUserPwd(userId: number, password: string): Promise<ApiResponse<void>> {
+export function resetUserPwd(userId: string | number, password: string): Promise<ApiResponse<void>> {
   return request.put('/system/sysUser/resetPwd', null, { params: { userId, password } })
 }
 

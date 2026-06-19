@@ -35,7 +35,7 @@ export function getDeptTree(): Promise<ApiResponse<SysDept[]>> {
 /**
  * 获取部门详情
  */
-export function getDept(id: number): Promise<ApiResponse<SysDept>> {
+export function getDept(id: string | number): Promise<ApiResponse<SysDept>> {
   return request.get(`/system/sysDept/${id}`)
 }
 
@@ -56,7 +56,7 @@ export function updateDept(data: SysDeptDTO): Promise<ApiResponse<void>> {
 /**
  * 删除部门
  */
-export function deleteDept(id: number): Promise<ApiResponse<void>> {
+export function deleteDept(id: string | number): Promise<ApiResponse<void>> {
   return request.delete(`/system/sysDept/${id}`)
 }
 
