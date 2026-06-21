@@ -1,9 +1,9 @@
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore, useMenuStore } from '@/store'
-import { getMyMenuTree } from '@/api/menu'
 import { Modal } from '@arco-design/web-vue'
-import { MENU_TYPE, RESPONSE_CODE } from '@/constants'
+import { MENU_TYPE } from '@/constants'
+import { resetDynamicRoutes } from '@/router'
 import type { SysMenu } from '@/types'
 
 interface MenuItem {
@@ -30,7 +30,8 @@ export function useLayout() {
   }
 
   function toMenuItem(menu: SysMenu): MenuItem {
-    const key = menu.path?.startsWith('/') ? menu.path : `/${menu.path}`
+    // 目录菜单的 path 可能为空，key 也保持空串，由 click 处拦截
+    const key = menu.path?.startsWith('/') ? menu.path : menu.path ? `/${menu.path}` : ''
     return {
       key,
       title: menu.menuName,
@@ -45,19 +46,9 @@ export function useLayout() {
 
   const selectedKey = computed(() => route.path)
 
-  async function loadMenus() {
-    if (menuStore.menuTree.length) return
-    try {
-      const res = await getMyMenuTree()
-      if (res.code === RESPONSE_CODE.SUCCESS) {
-        menuStore.setMenuTree(res.data)
-      }
-    } catch {
-      // Silently handle - menu will remain empty
-    }
-  }
-
   function handleMenuClick(key: string) {
+    // 目录菜单无 path：拦截空 key
+    if (!key) return
     router.push(key)
   }
 
@@ -70,6 +61,7 @@ export function useLayout() {
       onOk() {
         userStore.clearToken()
         menuStore.clearMenuTree()
+        resetDynamicRoutes()
         router.push('/login')
       },
     })
@@ -84,10 +76,6 @@ export function useLayout() {
     collapsed.value = !collapsed.value
   }
 
-  onMounted(() => {
-    loadMenus()
-  })
-
   return {
     collapsed,
     menuItems,
@@ -96,6 +84,5 @@ export function useLayout() {
     handleMenuClick,
     handleLogout,
     toggleCollapse,
-    loadMenus,
   }
 }
