@@ -32,25 +32,38 @@ export function useLoginPage() {
     })
     if (loginRes.code !== RESPONSE_CODE.SUCCESS) return
 
+    // token 先落，后续步骤失败时由 finally 回滚
     userStore.setToken(loginRes.data.accessToken)
-    await loadUserInfo()
-    await loadMenuTree()
-    Message.success('登录成功')
-    router.push('/')
+
+    try {
+      await loadUserInfo()
+      await loadMenuTree()
+      Message.success('登录成功')
+      // 使用 replace 触发守卫；守卫会拉菜单树并注入动态路由
+      router.replace('/')
+    } catch (err) {
+      // 回滚：避免用户拿到 token 但没菜单/用户信息的中间状态
+      userStore.clearToken()
+      menuStore.clearMenuTree()
+      Message.error(err instanceof Error ? err.message : '获取用户信息失败，请重新登录')
+      throw err
+    }
   }
 
   async function loadUserInfo(): Promise<void> {
     const userRes = await getLoginUser(form.username)
-    if (userRes.code === RESPONSE_CODE.SUCCESS) {
-      userStore.setUserInfo(userRes.data as LoginUser)
+    if (userRes.code !== RESPONSE_CODE.SUCCESS) {
+      throw new Error(userRes.message || '获取用户信息失败')
     }
+    userStore.setUserInfo(userRes.data as LoginUser)
   }
 
   async function loadMenuTree(): Promise<void> {
     const menuRes = await getMyMenuTree()
-    if (menuRes.code === RESPONSE_CODE.SUCCESS) {
-      menuStore.setMenuTree(menuRes.data)
+    if (menuRes.code !== RESPONSE_CODE.SUCCESS) {
+      throw new Error(menuRes.message || '获取菜单失败')
     }
+    menuStore.setMenuTree(menuRes.data)
   }
 
   async function handleLogin(): Promise<void> {

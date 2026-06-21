@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useLayout } from '@/hooks/useLayout'
 import { resolveIcon } from '@/utils/icon'
+import { Message } from '@arco-design/web-vue'
 
 const {
   collapsed,
@@ -11,6 +12,11 @@ const {
   handleLogout,
   toggleCollapse,
 } = useLayout()
+
+function handleChangePassword() {
+  // TODO: 修改密码功能待实现
+  Message.info('修改密码功能待实现')
+}
 </script>
 
 <template>
@@ -95,22 +101,32 @@ const {
           <span class="page-title">{{ $route.meta?.title || '首页' }}</span>
         </div>
         <div class="header-right">
-          <div class="user-dropdown" @click="handleLogout">
-            <span class="user-avatar">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>
-            </span>
-            <span class="user-name">{{ userNickname }}</span>
-            <span class="logout-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                <polyline points="16 17 21 12 16 7"/>
-                <line x1="21" y1="12" x2="9" y2="12"/>
-              </svg>
-            </span>
-          </div>
+          <a-dropdown trigger="click">
+            <div class="user-dropdown">
+              <span class="user-avatar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+              </span>
+              <span class="user-name">{{ userNickname }}</span>
+              <span class="dropdown-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </span>
+            </div>
+            <template #content>
+              <a-doption @click="handleChangePassword">
+                <span class="doption-icon"><icon-lock /></span>
+                修改密码
+              </a-doption>
+              <a-doption @click="handleLogout">
+                <span class="doption-icon"><icon-export /></span>
+                退出登录
+              </a-doption>
+            </template>
+          </a-dropdown>
         </div>
       </header>
 
@@ -176,7 +192,7 @@ const {
   font-size: 16px;
   font-weight: 600;
   color: #1a1a1a;
-  letter-spacing: 1px;
+  letter-spacing: 2px;
   white-space: nowrap;
 }
 
@@ -286,13 +302,19 @@ const {
   color: #333;
 }
 
-.logout-icon {
-  width: 16px;
-  height: 16px;
+.dropdown-icon {
+  width: 14px;
+  height: 14px;
   color: #999;
-  margin-left: 4px;
+  margin-left: 2px;
 
   svg { width: 100%; height: 100%; }
+}
+
+.doption-icon {
+  display: inline-flex;
+  vertical-align: middle;
+  margin-right: 8px;
 }
 
 .content {
@@ -306,7 +328,7 @@ const {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 13px;
   color: #bfbfbf;
   border-top: 1px solid #f0f0f0;
   background: #fff;
