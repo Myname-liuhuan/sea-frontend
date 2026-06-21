@@ -24,11 +24,10 @@ export interface PageResult<T> {
 
 // ========== 登录类型 ==========
 
-/** 登录请求 */
+/** 登录请求（后端只需要 username + password） */
 export interface LoginDTO {
   username: string
   password: string
-  refreshToken?: string
 }
 
 /** 登录结果 */
@@ -123,18 +122,6 @@ export interface SysRoleDTO {
   roleDesc?: string
   dataScope?: string
   status?: string
-}
-
-/** 分配用户请求 */
-export interface AssignUsersDTO {
-  roleId: string | number
-  userIds: (string | number)[]
-}
-
-/** 分配菜单请求 */
-export interface AssignMenusDTO {
-  roleId: string | number
-  menuIds: (string | number)[]
 }
 
 // ========== 菜单类型 ==========

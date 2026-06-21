@@ -29,7 +29,7 @@ const {
   handleSubmit,
   handleDelete,
   onPageChange,
-  handlePageSizeChange,
+  onPageSizeChange,
   closeModal,
 } = useUserPage()
 </script>
@@ -86,7 +86,7 @@ const {
       :page-size-options="[...PAGE_SIZE_OPTIONS]"
       row-key="id"
       @page-change="onPageChange"
-      @page-size-change="handlePageSizeChange"
+      @page-size-change="onPageSizeChange"
     >
       <template #cell-username="{ row }">{{ row.username }}</template>
       <template #cell-email="{ row }">{{ row.email || '-' }}</template>

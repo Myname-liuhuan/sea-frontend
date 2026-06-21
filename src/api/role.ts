@@ -30,6 +30,14 @@ export function updateRole(data: SysRoleDTO): Promise<ApiResponse<void>> {
 }
 
 /**
+ * 删除角色（硬删，会级联清理角色-用户、角色-菜单关联）
+ * 后端对应 DELETE /system/sysRole/{id}（sys:role:delete 权限）
+ */
+export function deleteRole(roleId: string | number): Promise<ApiResponse<void>> {
+  return request.delete(`/system/sysRole/${roleId}`)
+}
+
+/**
  * 分配用户给角色
  */
 export function assignUsers(data: { roleId: string | number; userIds: string[] }): Promise<ApiResponse<void>> {

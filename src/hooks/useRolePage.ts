@@ -4,6 +4,7 @@ import {
   getRoleList,
   addRole,
   updateRole,
+  deleteRole,
   assignUsers,
   assignMenus,
   getRoleMenuIds,
@@ -19,7 +20,7 @@ import type {
   TreeNodeDisplay,
 } from '@/types'
 import { Message, Modal } from '@arco-design/web-vue'
-import { removeIconField } from '@/utils/tree'
+import { toTreeNodeDisplay } from '@/utils/tree'
 import { formatEntityStatus } from '@/utils/format'
 import { RESPONSE_CODE, ENTITY_STATUS } from '@/constants'
 
@@ -117,13 +118,12 @@ export function useRolePage() {
   function handleDelete(record: SysRole) {
     Modal.confirm({
       title: '确认删除',
-      content: `确定要删除角色「${record.roleName}」吗？`,
+      content: `确定要删除角色「${record.roleName}」吗？该操作不可恢复，会同时清理角色下的用户和菜单关联。`,
+      okText: '确定删除',
+      cancelText: '取消',
+      okButtonProps: { status: 'danger' },
       onOk: async () => {
-        const res = await updateRole({
-          ...record,
-          id: record.id,
-          status: ENTITY_STATUS.DISABLED,
-        })
+        const res = await deleteRole(record.id)
         if (res.code === RESPONSE_CODE.SUCCESS) {
           Message.success('删除成功')
           fetchData()
@@ -215,7 +215,7 @@ export function useRolePage() {
         getAllMenuTree(),
         getRoleMenuIds(roleId),
       ])
-      menuTree.value = (menuRes.data ?? []).map(removeIconField)
+      menuTree.value = (menuRes.data ?? []).map(toTreeNodeDisplay)
       selectedMenuIds.value = assignedRes.data ?? []
       menuExpandedKeys.value = menuTree.value.map((node) => node.id)
     } finally {

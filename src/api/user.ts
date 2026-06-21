@@ -1,5 +1,5 @@
 import request from '@/utils/request'
-import type { ApiResponse, PageResult, SysUser, SysUserQuery, SysUserDTO, LoginUser, SysRole } from '@/types'
+import type { ApiResponse, PageResult, SysUser, SysUserQuery, SysUserDTO, LoginUser } from '@/types'
 
 /**
  * 获取当前登录用户信息
@@ -62,11 +62,4 @@ export function changeUserStatus(userId: string | number, status: string): Promi
  */
 export function resetUserPwd(userId: string | number, password: string): Promise<ApiResponse<void>> {
   return request.put('/system/sysUser/resetPwd', null, { params: { userId, password } })
-}
-
-/**
- * 获取角色下拉列表（用于用户表单）
- */
-export function getRoleOptions(): Promise<ApiResponse<SysRole[]>> {
-  return request.get('/system/sysRole/list')
 }

@@ -1,7 +1,7 @@
 import axios from 'axios'
 import type { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
 import { Message } from '@arco-design/web-vue'
-import router from '@/router'
+import router, { resetDynamicRoutes } from '@/router'
 import { useUserStore } from '@/store/user'
 import { RESPONSE_CODE, HTTP_STATUS, REQUEST_TIMEOUT_MS } from '@/constants'
 
@@ -28,7 +28,9 @@ service.interceptors.request.use(
 service.interceptors.response.use(
   (response: AxiosResponse) => {
     const { data } = response
-    if (data.code && data.code !== RESPONSE_CODE.SUCCESS) {
+    // 显式判断：code 字段存在且不等于 SUCCESS（200）时视为错误
+    // 后端语义：code=200 成功；code 缺失或非 200 视为失败
+    if (data?.code !== undefined && data.code !== RESPONSE_CODE.SUCCESS) {
       Message.error(data.message || '请求失败')
       return Promise.reject(new Error(data.message || 'Error'))
     }
@@ -45,6 +47,7 @@ service.interceptors.response.use(
     if (status === HTTP_STATUS.UNAUTHORIZED) {
       const userStore = useUserStore()
       userStore.clearToken()
+      resetDynamicRoutes()
       router.push({ name: 'Login' })
     } else {
       Message.error(messages[status] || `请求失败: ${error.message}`)

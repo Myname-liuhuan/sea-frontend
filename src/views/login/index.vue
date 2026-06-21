@@ -21,8 +21,9 @@ const { form, loading, handleLogin } = useLoginPage()
 
       <form class="login-form" @submit.prevent="handleLogin">
         <div class="form-item">
-          <div class="form-label">用户名</div>
+          <label for="login-username" class="form-label">用户名</label>
           <input
+            id="login-username"
             v-model="form.username"
             type="text"
             class="form-input"
@@ -32,8 +33,9 @@ const { form, loading, handleLogin } = useLoginPage()
         </div>
 
         <div class="form-item">
-          <div class="form-label">密码</div>
+          <label for="login-password" class="form-label">密码</label>
           <input
+            id="login-password"
             v-model="form.password"
             type="password"
             class="form-input"

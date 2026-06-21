@@ -1,4 +1,5 @@
 import * as arcoIcons from '@arco-design/web-vue/es/icon'
+import type { Component } from 'vue'
 
 /**
  * 后端返回的图标名称 -> Arco 图标组件名的映射
@@ -54,19 +55,19 @@ const iconNameMap: Record<string, string> = {
 /**
  * 根据后端返回的图标名称获取对应的 Arco 图标组件
  */
-export function resolveIcon(iconName?: string): unknown {
+export function resolveIcon(iconName?: string): Component | null {
   if (!iconName) return null
 
   // 先尝试直接映射
   const mappedName = iconNameMap[iconName]
-  if (mappedName && (arcoIcons as Record<string, unknown>)[mappedName]) {
-    return (arcoIcons as Record<string, unknown>)[mappedName]
+  if (mappedName && (arcoIcons as Record<string, Component>)[mappedName]) {
+    return (arcoIcons as Record<string, Component>)[mappedName]
   }
 
   // 尝试直接在 arcoIcons 中查找（有些图标名可能直接可用）
   const directName = iconName.startsWith('Icon') ? iconName : `Icon${iconName.charAt(0).toUpperCase() + iconName.slice(1)}`
-  if ((arcoIcons as Record<string, unknown>)[directName]) {
-    return (arcoIcons as Record<string, unknown>)[directName]
+  if ((arcoIcons as Record<string, Component>)[directName]) {
+    return (arcoIcons as Record<string, Component>)[directName]
   }
 
   // 都找不到返回 null

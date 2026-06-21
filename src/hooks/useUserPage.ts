@@ -123,10 +123,6 @@ export function useUserPage() {
     })
   }
 
-  function handlePageSizeChange(pageSize: number) {
-    onPageSizeChange(pageSize)
-  }
-
   function closeModal() {
     modalVisible.value = false
   }
@@ -148,7 +144,6 @@ export function useUserPage() {
     handleDelete,
     onPageChange,
     onPageSizeChange,
-    handlePageSizeChange,
     closeModal,
   }
 }
