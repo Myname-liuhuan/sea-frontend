@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useMenuPage } from '@/hooks/useMenuPage'
 import { MENU_TYPE } from '@/constants'
+import IconPicker from '@/components/IconPicker.vue'
 
 const {
   loading,
@@ -159,11 +160,6 @@ const {
     </div>
   </div>
 </template>
-
-<script lang="ts">
-import IconPicker from '@/components/IconPicker.vue'
-export default { components: { IconPicker } }
-</script>
 
 <style scoped lang="scss">
 .menu-page {

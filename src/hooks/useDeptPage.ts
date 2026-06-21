@@ -10,9 +10,11 @@ interface DeptOption {
   value: number
 }
 
-interface FlatDeptItem {
+export interface FlatDeptItem {
   dept: SysDept
   level: number
+  // index signature 让 DataTable<T extends Record<string, unknown>> 泛型约束通过
+  [key: string]: unknown
 }
 
 export function useDeptPage() {
@@ -87,7 +89,6 @@ export function useDeptPage() {
   function openAddModal(parentId = 0) {
     isEdit.value = false
     resetFormData(parentId)
-    loadParentDeptOptions()
     modalVisible.value = true
   }
 
@@ -103,7 +104,6 @@ export function useDeptPage() {
       email: row.email || '',
       status: row.status,
     })
-    loadParentDeptOptions()
     modalVisible.value = true
   }
 
@@ -167,6 +167,7 @@ export function useDeptPage() {
 
   onMounted(() => {
     fetchData()
+    loadParentDeptOptions()
   })
 
   return {

@@ -3,7 +3,7 @@ import { getAllMenuTree, getMenuOptions, addMenu, updateMenu, deleteMenu } from 
 import type { SysMenu, SysMenuDTO, TreeNodeDisplay, Option } from '@/types'
 import { RESPONSE_CODE, MENU_TYPE, MENU_VISIBLE } from '@/constants'
 import { MENU_TYPE_LABELS } from '@/constants'
-import { removeIconField } from '@/utils/tree'
+import { toTreeNodeDisplay } from '@/utils/tree'
 import { formatMenuType, formatVisible } from '@/utils/format'
 import { Message, Modal } from '@arco-design/web-vue'
 
@@ -58,7 +58,7 @@ export function useMenuPage() {
     try {
       const res = await getAllMenuTree()
       if (res.code === RESPONSE_CODE.SUCCESS) {
-        menuTree.value = res.data.map(removeIconField)
+        menuTree.value = res.data.map(toTreeNodeDisplay)
         expandedKeys.value = res.data.map((m: SysMenu) => String(m.id))
       }
     } finally {

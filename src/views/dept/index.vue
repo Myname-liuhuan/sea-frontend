@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useDeptPage } from '@/hooks/useDeptPage'
+import { useDeptPage, type FlatDeptItem } from '@/hooks/useDeptPage'
 import { ENTITY_STATUS } from '@/constants'
 import DataTable, { type DataTableColumn } from '@/components/DataTable.vue'
 
@@ -58,28 +58,28 @@ const {
         :columns="deptColumns"
         :data="flatData()"
         :loading="loading"
-        :row-key="(row: any) => row.dept.id"
+        :row-key="(row: FlatDeptItem) => row.dept.id"
       >
         <template #cell-name="{ row }">
-          <span :style="{ paddingLeft: ((row as any).level * 20) + 'px' }">
-            <span v-if="(row as any).level > 0" class="tree-indent">└─</span>
-            {{ (row as any).dept.name }}
+          <span :style="{ paddingLeft: (row.level * 20) + 'px' }">
+            <span v-if="row.level > 0" class="tree-indent">└─</span>
+            {{ row.dept.name }}
           </span>
         </template>
-        <template #cell-orderNum="{ row }">{{ (row as any).dept.orderNum }}</template>
-        <template #cell-leader="{ row }">{{ (row as any).dept.leader || '-' }}</template>
-        <template #cell-mobile="{ row }">{{ (row as any).dept.mobile || '-' }}</template>
-        <template #cell-email="{ row }">{{ (row as any).dept.email || '-' }}</template>
+        <template #cell-orderNum="{ row }">{{ row.dept.orderNum }}</template>
+        <template #cell-leader="{ row }">{{ row.dept.leader || '-' }}</template>
+        <template #cell-mobile="{ row }">{{ row.dept.mobile || '-' }}</template>
+        <template #cell-email="{ row }">{{ row.dept.email || '-' }}</template>
         <template #cell-status="{ row }">
-          <span class="status-tag" :class="(row as any).dept.status === ENTITY_STATUS.ACTIVE ? 'success' : 'danger'">
-            {{ formatStatus((row as any).dept.status) }}
+          <span class="status-tag" :class="row.dept.status === ENTITY_STATUS.ACTIVE ? 'success' : 'danger'">
+            {{ formatStatus(row.dept.status) }}
           </span>
         </template>
         <template #cell-action="{ row }">
           <div class="table-actions">
-            <button class="action-btn" v-has-permi="'sys:dept:add'" @click="openAddModal((row as any).dept.id)">新增</button>
-            <button class="action-btn" v-has-permi="'sys:dept:edit'" @click="openEditModal((row as any).dept)">编辑</button>
-            <button class="action-btn danger" v-has-permi="'sys:dept:delete'" @click="handleDelete((row as any).dept)">删除</button>
+            <button class="action-btn" v-has-permi="'sys:dept:add'" @click="openAddModal(row.dept.id)">新增</button>
+            <button class="action-btn" v-has-permi="'sys:dept:edit'" @click="openEditModal(row.dept)">编辑</button>
+            <button class="action-btn danger" v-has-permi="'sys:dept:delete'" @click="handleDelete(row.dept)">删除</button>
           </div>
         </template>
       </DataTable>
