@@ -13,6 +13,10 @@ declare module 'vue' {
   export interface GlobalComponents {
     ADoption: typeof import('@arco-design/web-vue')['Doption']
     ADropdown: typeof import('@arco-design/web-vue')['Dropdown']
+    AEmpty: typeof import('@arco-design/web-vue')['Empty']
+    AInput: typeof import('@arco-design/web-vue')['Input']
+    AModal: typeof import('@arco-design/web-vue')['Modal']
+    ATree: typeof import('@arco-design/web-vue')['Tree']
     ConfirmModal: typeof import('./components/ConfirmModal.vue')['default']
     DataTable: typeof import('./components/DataTable.vue')['default']
     IconPicker: typeof import('./components/IconPicker.vue')['default']
