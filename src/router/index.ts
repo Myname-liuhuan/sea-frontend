@@ -6,6 +6,7 @@ import { useMenuStore } from '@/store/menu'
 import { getMyMenuTree } from '@/api/menu'
 import { RESPONSE_CODE } from '@/constants'
 import { buildDynamicRoutes } from './guards'
+import workflowRoutes from './workflow'
 
 /** 静态基础路由（不需要权限也始终可用） */
 const staticRoutes: RouteRecordRaw[] = [
@@ -38,6 +39,13 @@ const staticRoutes: RouteRecordRaw[] = [
         component: () => import('@/views/about/index.vue'),
         meta: { title: '关于' },
       },
+      {
+        // 工作流详情（无菜单项的临时页，路由裸挂于 Layout 下）
+        path: 'workflow/detail',
+        name: 'WorkflowDetail',
+        component: () => import('@/views/workflow/Detail.vue'),
+        meta: { title: '工单详情' },
+      },
     ],
   },
 ]
@@ -46,10 +54,6 @@ const router = createRouter({
   history: createWebHistory(),
   routes: staticRoutes,
 })
-
-/** 动态路由注入状态 */
-let dynamicInjected = false
-const dynamicRouteNames = new Set<string>()
 
 /** 注入动态路由（在 beforeEach 中调用） */
 async function injectDynamicRoutes(): Promise<boolean> {

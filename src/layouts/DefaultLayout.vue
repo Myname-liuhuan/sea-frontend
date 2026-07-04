@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { onMounted, onUnmounted } from 'vue'
 import { useLayout } from '@/hooks/useLayout'
+import { useNotificationBell } from '@/hooks/useNotificationBell'
 import { resolveIcon } from '@/utils/icon'
 import { Message } from '@arco-design/web-vue'
 
@@ -12,6 +14,64 @@ const {
   handleLogout,
   toggleCollapse,
 } = useLayout()
+
+const {
+  unread,
+  unreadLabel,
+  inboxOpen,
+  recent,
+  inboxLoading,
+  openInbox,
+  onRead,
+  onReadAll,
+} = useNotificationBell()
+
+/** WebSocket 站内信推送订阅（real-time 增量更新 unread） */
+let socket: WebSocket | null = null
+function connectWs() {
+  if (socket) return
+  const protocol = location.protocol === 'https:' ? 'wss' : 'ws'
+  const baseUrl = (import.meta.env.VITE_WS_BASE_URL as string) || `${protocol}://${location.host}`
+  const userId = readCurrentUserId()
+  if (!userId) return
+  const ws = new WebSocket(`${baseUrl}/ws/notify?userId=${userId}`)
+  ws.onmessage = () => {
+    // 收到任意推送即递增未读
+    unread.value = unread.value + 1
+  }
+  ws.onclose = () => {
+    socket = null
+    setTimeout(connectWs, 5_000)
+  }
+  ws.onerror = () => {
+    try {
+      ws.close()
+    } catch (e) {
+      // swallow
+    }
+  }
+  socket = ws
+}
+
+function readCurrentUserId(): number | null {
+  try {
+    const raw = localStorage.getItem('userId')
+    return raw ? Number(raw) : null
+  } catch (e) {
+    return null
+  }
+}
+
+onMounted(() => {
+  connectWs()
+})
+
+onUnmounted(() => {
+  if (socket) {
+    socket.close()
+    socket = null
+  }
+})
 
 function handleChangePassword() {
   // TODO: 修改密码功能待实现
@@ -101,6 +161,46 @@ function handleChangePassword() {
           <span class="page-title">{{ $route.meta?.title || '首页' }}</span>
         </div>
         <div class="header-right">
+          <!-- 站内信铃铛 -->
+          <a-popup
+            trigger="click"
+            v-model:popup-visible="inboxOpen"
+            position="bottom"
+          >
+            <button class="bell-btn" @click="openInbox">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
+                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+              </svg>
+              <span v-if="unread > 0" class="bell-badge">{{ unreadLabel }}</span>
+            </button>
+            <template #content>
+              <div class="inbox-panel" @click.stop>
+                <div class="inbox-header">
+                  <span>站内信</span>
+                  <a-link v-if="unread > 0" @click="onReadAll">全部已读</a-link>
+                </div>
+                <div v-if="inboxLoading" class="inbox-empty">加载中…</div>
+                <div v-else-if="recent.length === 0" class="inbox-empty">暂无消息</div>
+                <ul v-else class="inbox-list">
+                  <li
+                    v-for="msg in recent"
+                    :key="msg.id"
+                    :class="['inbox-item', { unread: msg.readFlag === 0 }]"
+                  >
+                    <div class="inbox-title">{{ msg.title }}</div>
+                    <div class="inbox-content">{{ msg.content }}</div>
+                    <div class="inbox-meta">
+                      <span>{{ msg.createdAt }}</span>
+                      <a-link v-if="msg.readFlag === 0" @click="onRead(msg.id)">标已读</a-link>
+                      <router-link v-if="msg.link" :to="msg.link">查看</router-link>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </template>
+          </a-popup>
+
           <a-dropdown trigger="click">
             <div class="user-dropdown">
               <span class="user-avatar">
@@ -309,6 +409,107 @@ function handleChangePassword() {
   margin-left: 2px;
 
   svg { width: 100%; height: 100%; }
+}
+
+.bell-btn {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  color: #666;
+  cursor: pointer;
+  margin-right: var(--space-md);
+
+  &:hover { background: #f5f5f5; color: #1a1a1a; }
+  svg { width: 18px; height: 18px; }
+}
+
+.bell-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
+  color: #fff;
+  background: #f53f3f;
+  border-radius: 8px;
+}
+
+.inbox-panel {
+  width: 360px;
+  max-height: 480px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.inbox-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  font-weight: 500;
+}
+
+.inbox-empty {
+  padding: 32px;
+  text-align: center;
+  color: #999;
+  font-size: 13px;
+}
+
+.inbox-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.inbox-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f5f5f5;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  &:hover { background: #fafafa; }
+  &.unread .inbox-title { font-weight: 600; }
+}
+
+.inbox-title {
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.inbox-content {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.inbox-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #999;
 }
 
 .doption-icon {

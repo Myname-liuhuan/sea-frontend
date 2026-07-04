@@ -1,7 +1,11 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { Message } from '@arco-design/web-vue'
 import { useUserPage } from '@/hooks/useUserPage'
 import { PAGE_SIZE_OPTIONS, USER_BAN_STATUS } from '@/constants'
 import DataTable, { type DataTableColumn } from '@/components/DataTable.vue'
+import ApplyResetPasswordModal from '@/views/workflow/ApplyResetPasswordModal.vue'
 
 const userColumns: DataTableColumn[] = [
   { key: 'username', title: '用户名', width: '140px' },
@@ -10,7 +14,7 @@ const userColumns: DataTableColumn[] = [
   { key: 'avatarUrl', title: '头像', width: '200px' },
   { key: 'isBanned', title: '状态', width: '100px' },
   { key: 'createTime', title: '创建时间', width: '180px' },
-  { key: 'action', title: '操作', width: '160px' },
+  { key: 'action', title: '操作', width: '260px' },
 ]
 
 const {
@@ -32,6 +36,26 @@ const {
   onPageSizeChange,
   closeModal,
 } = useUserPage()
+
+const router = useRouter()
+
+interface ApplyTarget {
+  id: number | string
+  username?: string
+}
+const applyTarget = ref<ApplyTarget | null>(null)
+const applyModalRef = ref<InstanceType<typeof ApplyResetPasswordModal> | null>(null)
+
+function openApplyModal(row: ApplyTarget) {
+  applyTarget.value = { id: row.id, username: row.username }
+  applyModalRef.value?.open()
+}
+
+function onApplySubmitted(taskNo: string) {
+  void taskNo
+  Message.success('可在"我的申请"查看进度')
+  router.push({ name: 'WorkflowMy', query: { taskNo } }).catch(() => undefined)
+}
 </script>
 
 <template>
@@ -102,9 +126,17 @@ const {
         <div class="table-actions">
           <button class="action-btn" v-has-permi="'sys:user:edit'" @click="openEditModal(row)">编辑</button>
           <button class="action-btn danger" v-has-permi="'sys:user:delete'" @click="handleDelete(row)">删除</button>
+          <button class="action-btn" v-has-permi="'workflow:apply'" @click="openApplyModal(row)">申请重置</button>
         </div>
       </template>
     </DataTable>
+
+    <ApplyResetPasswordModal
+      v-if="applyTarget"
+      ref="applyModalRef"
+      :target-user="applyTarget"
+      @submitted="onApplySubmitted"
+    />
 
     <!-- 弹窗 -->
     <div v-if="modalVisible" class="modal-mask" @click.self="closeModal">
