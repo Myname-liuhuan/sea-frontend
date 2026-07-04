@@ -38,6 +38,13 @@ export function useLoginPage() {
     try {
       await loadUserInfo()
       await loadMenuTree()
+
+      if (loginRes.data.mustChangePassword) {
+        Message.warning('密码为临时密码，请先修改')
+        router.replace('/change-password-first')
+        return
+      }
+
       Message.success('登录成功')
       // 使用 replace 触发守卫；守卫会拉菜单树并注入动态路由
       router.replace('/')

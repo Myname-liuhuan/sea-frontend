@@ -22,3 +22,6 @@ export const DEFAULT_PAGE_NUM = 1
 
 /** 默认每页条数（列表兜底） */
 export const DEFAULT_LIST_PAGE_SIZE = 10
+
+/** 强制改密页：密码最短长度 */
+export const MIN_PASSWORD_LENGTH = 8

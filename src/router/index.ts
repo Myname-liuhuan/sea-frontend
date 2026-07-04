@@ -45,6 +45,13 @@ const staticRoutes: RouteRecordRaw[] = [
         component: () => import('@/views/workflow/Detail.vue'),
         meta: { title: '工单详情' },
       },
+      {
+        // 临时改密页：登录后强制改密完成才能进系统
+        path: 'change-password-first',
+        name: 'ChangePasswordFirst',
+        component: () => import('@/views/change-password-first/index.vue'),
+        meta: { title: '请先修改密码' },
+      },
     ],
   },
 ]
@@ -122,6 +129,18 @@ router.beforeEach(async (to, _from, next) => {
   // 检查目标路由是否已注册
   if (to.name && router.hasRoute(to.name)) {
     next()
+    return
+  }
+
+  // 强制改密拦截：登录但 require_password_change=true 时所有 path 跳
+  // /change-password-first（自身页面除外）。
+  const userStoreForGuard = useUserStore()
+  if (
+    token &&
+    userStoreForGuard.mustChangePassword &&
+    to.name !== 'ChangePasswordFirst'
+  ) {
+    next({ name: 'ChangePasswordFirst', replace: true })
     return
   }
 

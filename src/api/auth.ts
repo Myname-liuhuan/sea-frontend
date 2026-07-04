@@ -15,3 +15,20 @@ export function login(data: LoginDTO): Promise<ApiResponse<LoginResult>> {
 export function refreshToken(): Promise<ApiResponse<LoginResult>> {
   return request.post('/auth/refresh')
 }
+
+/**
+ * 自助改密：sea-system/changePassword?userId=...&oldPassword=...&newPassword=...
+ * 强制改密场景下 oldPassword 可空。
+ */
+export function changePassword(
+  userId: number | string,
+  newPassword: string,
+  oldPassword?: string,
+): Promise<ApiResponse<boolean>> {
+  const params: Record<string, string> = {
+    userId: String(userId),
+    newPassword,
+  }
+  if (oldPassword) params.oldPassword = oldPassword
+  return request.get('/system/sysUser/changePassword', { params })
+}

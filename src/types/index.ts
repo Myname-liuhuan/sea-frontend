@@ -35,6 +35,11 @@ export interface LoginResult {
   accessToken: string
   refreshToken: string
   expiresIn: number
+  /**
+   * true 时用户当前密码是临时密码（重置密码工单后首登），前端路由 beforeEach 应强制跳
+   * /change-password-first；改密完成后端置回 0，本字段会变 false。
+   */
+  mustChangePassword?: boolean
 }
 
 /** 登录用户信息 */
@@ -45,6 +50,8 @@ export interface LoginUser {
   version?: number
   roles: string[]
   perms: string[]
+  /** 重置密码工单首次登录：服务端要求强制改密 */
+  requirePasswordChange?: boolean
 }
 
 // ========== 用户类型 ==========
