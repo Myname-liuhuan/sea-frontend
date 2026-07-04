@@ -2,6 +2,7 @@ import { reactive } from 'vue'
 import { useTable } from '@/hooks/useTable'
 import { getMyApplications } from '@/api/workflow/list'
 import type { WorkflowTask, WorkflowTaskQuery } from '@/types/workflow'
+import { DEFAULT_LIST_PAGE_SIZE, DEFAULT_PAGE_NUM } from '@/constants/workflow'
 
 /**
  * 我的申请列表。
@@ -23,7 +24,12 @@ export function useMyApplications() {
     api: (p) =>
       getMyApplications(p).then((res) => {
         if (res.data == null) {
-          return { rows: [], total: 0, pageNum: p.pageNum ?? 1, pageSize: p.pageSize ?? 10 }
+          return {
+            rows: [],
+            total: 0,
+            pageNum: p.pageNum ?? DEFAULT_PAGE_NUM,
+            pageSize: p.pageSize ?? DEFAULT_LIST_PAGE_SIZE,
+          }
         }
         return res.data
       }),

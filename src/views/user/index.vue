@@ -47,7 +47,7 @@ const applyTarget = ref<ApplyTarget | null>(null)
 const applyModalRef = ref<InstanceType<typeof ApplyResetPasswordModal> | null>(null)
 
 function openApplyModal(row: ApplyTarget) {
-  applyTarget.value = { id: row.id, username: row.username }
+  applyTarget.value = { id: Number(row.id), username: row.username }
   applyModalRef.value?.open()
 }
 

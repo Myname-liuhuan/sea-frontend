@@ -3,7 +3,7 @@ import { onMounted, onUnmounted } from 'vue'
 import { useLayout } from '@/hooks/useLayout'
 import { useNotificationBell } from '@/hooks/useNotificationBell'
 import { resolveIcon } from '@/utils/icon'
-import { Message } from '@arco-design/web-vue'
+import { Message, Trigger as ATrigger } from '@arco-design/web-vue'
 
 const {
   collapsed,
@@ -27,6 +27,7 @@ const {
 } = useNotificationBell()
 
 /** WebSocket 站内信推送订阅（real-time 增量更新 unread） */
+const WS_RECONNECT_DELAY_MS = 5_000
 let socket: WebSocket | null = null
 function connectWs() {
   if (socket) return
@@ -41,12 +42,12 @@ function connectWs() {
   }
   ws.onclose = () => {
     socket = null
-    setTimeout(connectWs, 5_000)
+    setTimeout(connectWs, WS_RECONNECT_DELAY_MS)
   }
   ws.onerror = () => {
     try {
       ws.close()
-    } catch (e) {
+    } catch {
       // swallow
     }
   }
@@ -57,7 +58,7 @@ function readCurrentUserId(): number | null {
   try {
     const raw = localStorage.getItem('userId')
     return raw ? Number(raw) : null
-  } catch (e) {
+  } catch {
     return null
   }
 }
@@ -162,10 +163,12 @@ function handleChangePassword() {
         </div>
         <div class="header-right">
           <!-- 站内信铃铛 -->
-          <a-popup
+          <ATrigger
             trigger="click"
-            v-model:popup-visible="inboxOpen"
+            :popup-visible="inboxOpen"
             position="bottom"
+            :unmount-on-close="true"
+            @popup-visible-change="(v: boolean) => (inboxOpen = v)"
           >
             <button class="bell-btn" @click="openInbox">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -199,7 +202,7 @@ function handleChangePassword() {
                 </ul>
               </div>
             </template>
-          </a-popup>
+          </ATrigger>
 
           <a-dropdown trigger="click">
             <div class="user-dropdown">

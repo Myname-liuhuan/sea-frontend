@@ -5,6 +5,7 @@ import { getPendingApprovals } from '@/api/workflow/list'
 import { approveTask, reassignTask } from '@/api/workflow/approve'
 import type { WorkflowTask, WorkflowTaskQuery, ApproveRequest, ReassignRequest } from '@/types/workflow'
 import { RESPONSE_CODE } from '@/constants'
+import { DEFAULT_LIST_PAGE_SIZE, DEFAULT_PAGE_NUM } from '@/constants/workflow'
 
 /**
  * 待我审批列表 + 行内审批 / 转交操作。
@@ -25,7 +26,12 @@ export function usePendingApprovals() {
     api: (p) =>
       getPendingApprovals(p).then((res) => {
         if (res.data == null) {
-          return { rows: [], total: 0, pageNum: p.pageNum ?? 1, pageSize: p.pageSize ?? 10 }
+          return {
+            rows: [],
+            total: 0,
+            pageNum: p.pageNum ?? DEFAULT_PAGE_NUM,
+            pageSize: p.pageSize ?? DEFAULT_LIST_PAGE_SIZE,
+          }
         }
         return res.data
       }),

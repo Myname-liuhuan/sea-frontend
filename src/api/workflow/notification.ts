@@ -1,5 +1,6 @@
 import request from '@/utils/request'
-import type { ApiResponse, InAppMessage, PageResult } from '@/types/workflow'
+import type { ApiResponse, PageResult } from '@/types'
+import type { InAppMessage } from '@/types/workflow'
 
 /** 站内信未读数 */
 export function getUnreadCount(): Promise<ApiResponse<number>> {

@@ -7,6 +7,8 @@ export interface DataTableColumn {
   title: string
   width: string
   align?: 'left' | 'center' | 'right'
+  /** 单行省略 */
+  ellipsis?: boolean
   /** 固定在右侧（横向滚动时钉住）；默认 key === 'action' 自动启用 */
   sticky?: boolean
 }

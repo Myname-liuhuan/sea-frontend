@@ -2,6 +2,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { getUnreadCount, getInAppMessages, markMessageRead, markAllRead } from '@/api/workflow/notification'
 import type { InAppMessage } from '@/types/workflow'
 import { RESPONSE_CODE } from '@/constants'
+import { INBOX_BADGE_MAX, INBOX_PAGE_SIZE, INBOX_POLL_INTERVAL_MS } from '@/constants/workflow'
 
 /**
  * 站内信铃铛。
@@ -16,7 +17,7 @@ export function useNotificationBell() {
   const inboxLoading = ref(false)
   let pollTimer: ReturnType<typeof setInterval> | null = null
 
-  const unreadLabel = computed(() => (unread.value > 99 ? '99+' : String(unread.value)))
+  const unreadLabel = computed(() => (unread.value > INBOX_BADGE_MAX ? '99+' : String(unread.value)))
 
   async function reloadUnread() {
     try {
@@ -24,7 +25,7 @@ export function useNotificationBell() {
       if (res.code === RESPONSE_CODE.SUCCESS && typeof res.data === 'number') {
         unread.value = res.data
       }
-    } catch (e) {
+    } catch {
       // swallow
     }
   }
@@ -34,7 +35,7 @@ export function useNotificationBell() {
     if (!inboxOpen.value) return
     inboxLoading.value = true
     try {
-      const res = await getInAppMessages(1, 10)
+      const res = await getInAppMessages(1, INBOX_PAGE_SIZE)
       if (res.code === RESPONSE_CODE.SUCCESS && res.data) {
         recent.value = res.data.rows
       }
@@ -67,7 +68,7 @@ export function useNotificationBell() {
 
   onMounted(() => {
     reloadUnread()
-    pollTimer = setInterval(reloadUnread, 60_000)
+    pollTimer = setInterval(reloadUnread, INBOX_POLL_INTERVAL_MS)
   })
   onUnmounted(() => {
     if (pollTimer) clearInterval(pollTimer)

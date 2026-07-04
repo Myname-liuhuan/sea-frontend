@@ -4,7 +4,7 @@
 export interface ApplyRequest {
   targetUserId: number
   reason: string
-  urgency: 1 | 2
+  urgency: typeof URGENCY.NORMAL | typeof URGENCY.URGENT
 }
 
 /** 发起申请返回 */
@@ -37,7 +37,7 @@ export interface WorkflowTask {
   targetUserId: number
   targetUserName?: string
   reason: string
-  urgency: 1 | 2
+  urgency: number
   status: number
   statusLabel?: string
   currentNode?: string
@@ -72,6 +72,7 @@ export interface WorkflowTaskQuery {
   urgency?: number
   applicantId?: number
   targetUserId?: number
+  [key: string]: unknown
 }
 
 /** 流程定义视图 */

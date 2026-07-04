@@ -36,7 +36,7 @@ const opModalVisible = ref(false)
 const opMode = ref<'approve' | 'reassign' | null>(null)
 const opApproved = ref<boolean>(true)
 const opComment = ref('')
-const opTargetUserId = ref<number | null>(null)
+const opTargetUserId = ref<string>('')
 const opRow = ref<OpRow | null>(null)
 
 function openApprove(row: OpRow, approved: boolean) {
@@ -44,7 +44,7 @@ function openApprove(row: OpRow, approved: boolean) {
   opApproved.value = approved
   opRow.value = row
   opComment.value = ''
-  opTargetUserId.value = null
+  opTargetUserId.value = ''
   opModalVisible.value = true
 }
 
@@ -52,7 +52,7 @@ function openReassign(row: OpRow) {
   opMode.value = 'reassign'
   opRow.value = row
   opComment.value = ''
-  opTargetUserId.value = null
+  opTargetUserId.value = ''
   opModalVisible.value = true
 }
 
@@ -73,7 +73,7 @@ async function submitOp() {
   } else if (opMode.value === 'reassign' && opTargetUserId.value) {
     await reassign(
       { taskNo: opRow.value.taskNo } as never,
-      opTargetUserId.value,
+      Number(opTargetUserId.value),
       opComment.value || undefined,
     )
   }
@@ -138,7 +138,7 @@ const modalOkText = () => {
       @cancel="closeOp"
       @close="closeOp"
     >
-      <a-form v-if="opMode === 'reassign'" label-align="left">
+      <a-form v-if="opMode === 'reassign'" label-align="left" :model="{ targetUserId: opTargetUserId, comment: opComment }">
         <a-form-item label="转交用户 ID" required>
           <AInput v-model="opTargetUserId" placeholder="目标用户 ID" allow-clear />
         </a-form-item>
@@ -146,7 +146,7 @@ const modalOkText = () => {
           <AInput v-model="opComment" placeholder="选填" allow-clear />
         </a-form-item>
       </a-form>
-      <a-form v-else label-align="left">
+      <a-form v-else label-align="left" :model="{ comment: opComment }">
         <a-form-item label="审批意见">
           <AInput v-model="opComment" placeholder="选填" allow-clear />
         </a-form-item>

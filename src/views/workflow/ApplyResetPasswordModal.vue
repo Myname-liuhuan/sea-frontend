@@ -4,7 +4,7 @@ import { usePasswordResetApply } from '@/hooks/usePasswordResetApply'
 
 const props = defineProps<{
   // 当前操作的目标用户：只用于回填 targetUserId 与展示
-  targetUser: { id: number; username?: string }
+  targetUser: { id: number | string; username?: string }
 }>()
 
 const emit = defineEmits<{

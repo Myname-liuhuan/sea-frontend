@@ -1,7 +1,6 @@
 import request from '@/utils/request'
+import type { ApiResponse, PageResult } from '@/types'
 import type {
-  ApiResponse,
-  PageResult,
   WorkflowDetail,
   WorkflowTask,
   WorkflowTaskQuery,

@@ -12,6 +12,18 @@ export default [
       parserOptions: {
         parser: tseslint.parser,
       },
+      globals: {
+        // 浏览器全局（Vue file 的 <script setup> 不自动继承 tsconfig DOM lib）
+        window: 'readonly',
+        document: 'readonly',
+        WebSocket: 'readonly',
+        localStorage: 'readonly',
+        sessionStorage: 'readonly',
+        location: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        console: 'readonly',
+      },
     },
     rules: {
       'no-magic-numbers': ['error', {

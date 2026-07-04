@@ -1,5 +1,6 @@
 import request from '@/utils/request'
-import type { ApiResponse, ApproveRequest, ReassignRequest } from '@/types/workflow'
+import type { ApiResponse } from '@/types'
+import type { ApproveRequest, ReassignRequest } from '@/types/workflow'
 
 /** 审批通过 / 拒绝 */
 export function approveTask(data: ApproveRequest): Promise<ApiResponse<void>> {

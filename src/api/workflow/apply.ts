@@ -1,5 +1,6 @@
 import request from '@/utils/request'
-import type { ApiResponse, ApplyRequest, ApplyResult } from '@/types/workflow'
+import type { ApiResponse } from '@/types'
+import type { ApplyRequest, ApplyResult } from '@/types/workflow'
 
 /**
  * 发起重置密码申请。

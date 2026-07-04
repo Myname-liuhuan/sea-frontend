@@ -3,6 +3,7 @@ import { Message } from '@arco-design/web-vue'
 import { applyResetPassword } from '@/api/workflow/apply'
 import type { ApplyRequest, ApplyResult } from '@/types/workflow'
 import { RESPONSE_CODE } from '@/constants'
+import { APPLY_REASON_MAX_LENGTH } from '@/constants/workflow'
 
 /**
  * 重置密码申请表单 hook：被用户列表操作列嵌入的弹窗复用。
@@ -11,12 +12,12 @@ import { RESPONSE_CODE } from '@/constants'
  *   const { modalVisible, form, urgencyOptions, submit } = usePasswordResetApply(currentRow)
  *   submit() 后：success → 关闭弹窗，给出工单号提示
  */
-export function usePasswordResetApply(row: { id: number; username?: string }) {
+export function usePasswordResetApply(row: { id: number | string; username?: string }) {
   const modalVisible = ref(false)
   const loading = ref(false)
 
   const form = reactive<ApplyRequest>({
-    targetUserId: row.id,
+    targetUserId: Number(row.id),
     reason: '',
     urgency: 1,
   })
@@ -28,7 +29,7 @@ export function usePasswordResetApply(row: { id: number; username?: string }) {
 
   /** 打开弹窗：把目标用户回填到只读字段 */
   function open() {
-    form.targetUserId = row.id
+    form.targetUserId = Number(row.id)
     form.reason = ''
     form.urgency = 1
     modalVisible.value = true
@@ -45,8 +46,8 @@ export function usePasswordResetApply(row: { id: number; username?: string }) {
       Message.warning('请填写申请原因')
       return
     }
-    if (form.reason.length > 500) {
-      Message.warning('申请原因不能超过 500 字')
+    if (form.reason.length > APPLY_REASON_MAX_LENGTH) {
+      Message.warning(`申请原因不能超过 ${APPLY_REASON_MAX_LENGTH} 字`)
       return
     }
     loading.value = true
