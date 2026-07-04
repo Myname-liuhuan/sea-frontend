@@ -2,8 +2,11 @@
 import { onMounted, onUnmounted } from 'vue'
 import { useLayout } from '@/hooks/useLayout'
 import { useNotificationBell } from '@/hooks/useNotificationBell'
+import { useUserStore } from '@/store'
 import { resolveIcon } from '@/utils/icon'
 import { Message, Trigger as ATrigger } from '@arco-design/web-vue'
+
+const userStore = useUserStore()
 
 const {
   collapsed,
@@ -33,9 +36,10 @@ function connectWs() {
   if (socket) return
   const protocol = location.protocol === 'https:' ? 'wss' : 'ws'
   const baseUrl = (import.meta.env.VITE_WS_BASE_URL as string) || `${protocol}://${location.host}`
-  const userId = readCurrentUserId()
-  if (!userId) return
-  const ws = new WebSocket(`${baseUrl}/ws/notify?userId=${userId}`)
+  const token = userStore.token
+  if (!token) return
+  // 用 token 而不是 userId：服务端从 JWT 解析 userId，伪造 query 没意义
+  const ws = new WebSocket(`${baseUrl}/ws/notify?token=${encodeURIComponent(token)}`)
   ws.onmessage = () => {
     // 收到任意推送即递增未读
     unread.value = unread.value + 1
@@ -52,15 +56,6 @@ function connectWs() {
     }
   }
   socket = ws
-}
-
-function readCurrentUserId(): number | null {
-  try {
-    const raw = localStorage.getItem('userId')
-    return raw ? Number(raw) : null
-  } catch {
-    return null
-  }
 }
 
 onMounted(() => {
