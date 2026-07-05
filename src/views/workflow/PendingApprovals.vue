@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import { Modal as AModal, Input as AInput } from '@arco-design/web-vue'
 import DataTable, { type DataTableColumn } from '@/components/DataTable.vue'
 import { usePendingApprovals } from '@/hooks/usePendingApprovals'
@@ -35,24 +35,26 @@ interface OpRow {
 const opModalVisible = ref(false)
 const opMode = ref<'approve' | 'reassign' | null>(null)
 const opApproved = ref<boolean>(true)
-const opComment = ref('')
-const opTargetUserId = ref<string>('')
 const opRow = ref<OpRow | null>(null)
+
+interface ApproveForm { comment: string }
+interface ReassignForm { targetUserId: string; comment: string }
+const approveForm = reactive<ApproveForm>({ comment: '' })
+const reassignForm = reactive<ReassignForm>({ targetUserId: '', comment: '' })
 
 function openApprove(row: OpRow, approved: boolean) {
   opMode.value = 'approve'
   opApproved.value = approved
   opRow.value = row
-  opComment.value = ''
-  opTargetUserId.value = ''
+  approveForm.comment = ''
   opModalVisible.value = true
 }
 
 function openReassign(row: OpRow) {
   opMode.value = 'reassign'
   opRow.value = row
-  opComment.value = ''
-  opTargetUserId.value = ''
+  reassignForm.targetUserId = ''
+  reassignForm.comment = ''
   opModalVisible.value = true
 }
 
@@ -68,13 +70,13 @@ async function submitOp() {
     await approve(
       { taskNo: opRow.value.taskNo } as never,
       opApproved.value,
-      opComment.value || undefined,
+      approveForm.comment || undefined,
     )
-  } else if (opMode.value === 'reassign' && opTargetUserId.value) {
+  } else if (opMode.value === 'reassign' && reassignForm.targetUserId) {
     await reassign(
       { taskNo: opRow.value.taskNo } as never,
-      Number(opTargetUserId.value),
-      opComment.value || undefined,
+      Number(reassignForm.targetUserId),
+      reassignForm.comment || undefined,
     )
   }
   closeOp()
@@ -138,17 +140,17 @@ const modalOkText = () => {
       @cancel="closeOp"
       @close="closeOp"
     >
-      <a-form v-if="opMode === 'reassign'" label-align="left" :model="{ targetUserId: opTargetUserId, comment: opComment }">
+      <a-form v-if="opMode === 'reassign'" label-align="left" :model="reassignForm">
         <a-form-item label="转交用户 ID" required>
-          <AInput v-model="opTargetUserId" placeholder="目标用户 ID" allow-clear />
+          <AInput v-model="reassignForm.targetUserId" placeholder="目标用户 ID" allow-clear />
         </a-form-item>
         <a-form-item label="备注">
-          <AInput v-model="opComment" placeholder="选填" allow-clear />
+          <AInput v-model="reassignForm.comment" placeholder="选填" allow-clear />
         </a-form-item>
       </a-form>
-      <a-form v-else label-align="left" :model="{ comment: opComment }">
+      <a-form v-else label-align="left" :model="approveForm">
         <a-form-item label="审批意见">
-          <AInput v-model="opComment" placeholder="选填" allow-clear />
+          <AInput v-model="approveForm.comment" placeholder="选填" allow-clear />
         </a-form-item>
       </a-form>
     </AModal>
