@@ -25,3 +25,28 @@ export const DEFAULT_LIST_PAGE_SIZE = 10
 
 /** 强制改密页：密码最短长度 */
 export const MIN_PASSWORD_LENGTH = 8
+
+// ============ 流程模型设计器 ============
+
+/** 流程模型权限点（与后端 WorkflowPermissionConstants 对应） */
+export const WORKFLOW_MODEL_PERMS = {
+  READ: 'workflow:model:read',
+  WRITE: 'workflow:model:write',
+  DEPLOY: 'workflow:model:deploy',
+  DELETE: 'workflow:model:delete',
+} as const
+
+/** 设计器右侧属性面板宽度（px） */
+export const BPMN_PROPERTIES_PANEL_WIDTH = 320
+
+/** 设计器画布最小高度（px） */
+export const BPMN_CANVAS_MIN_HEIGHT = 600
+
+/** 模型 key 命名最大长度 */
+export const MODEL_KEY_MAX_LENGTH = 64
+
+/** 模型名称最大长度 */
+export const MODEL_NAME_MAX_LENGTH = 100
+
+/** 业务描述最大长度 */
+export const MODEL_DESC_MAX_LENGTH = 500

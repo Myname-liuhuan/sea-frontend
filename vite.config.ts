@@ -23,6 +23,9 @@ export default defineConfig({
       '@': resolve(__dirname, 'src'),
     },
   },
+  optimizeDeps: {
+    include: ['bpmn-js', 'bpmn-js-properties-panel', 'camunda-bpmn-moddle'],
+  },
   css: {
     preprocessorOptions: {
       scss: {},

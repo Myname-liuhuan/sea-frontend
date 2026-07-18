@@ -141,3 +141,80 @@ export const WORKFLOW_STATUS_LABEL: Record<number, string> = {
   4: '已撤回',
   5: '已完成',
 }
+
+// ============ 流程模型（设计器） ============
+
+/** 模型列表项 */
+export interface WorkflowModelListItem {
+  id: string
+  name: string
+  key: string
+  category?: string
+  version: number
+  deploymentId?: string
+  businessType?: string
+  description?: string
+  creatorName?: string
+  createTime: string
+  lastUpdateTime?: string
+}
+
+/** 模型详情（含 META_INFO_ 解析字段） */
+export interface WorkflowModel {
+  id: string
+  name: string
+  key: string
+  category?: string
+  version: number
+  metaInfo?: string
+  deploymentId?: string
+  tenantId?: string
+  businessType?: string
+  description?: string
+  creatorId?: number
+  creatorName?: string
+  metaVersion?: number
+  createTime: string
+  lastUpdateTime?: string
+}
+
+/** 模型查询参数 */
+export interface WorkflowModelQuery {
+  pageNum?: number
+  pageSize?: number
+  name?: string
+  key?: string
+  category?: string
+  businessType?: string
+  [key: string]: unknown
+}
+
+/** 新建模型请求 */
+export interface CreateModelRequest {
+  name: string
+  key: string
+  category?: string
+  businessType: string
+  description?: string
+}
+
+/** 更新模型请求 */
+export interface UpdateModelRequest {
+  name?: string
+  category?: string
+  businessType?: string
+  description?: string
+}
+
+/** 保存 BPMN 请求 */
+export interface SaveBpmnRequest {
+  xml: string
+  svg?: string
+}
+
+/** 部署结果 */
+export interface DeployModelResult {
+  deploymentId: string
+  deployedProcessDefinitionIds: string[]
+  version: number
+}

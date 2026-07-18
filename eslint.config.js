@@ -23,6 +23,16 @@ export default [
         setTimeout: 'readonly',
         clearTimeout: 'readonly',
         console: 'readonly',
+        // DOM 类型（no-undef 不读 tsconfig lib，只能手列）
+        Element: 'readonly',
+        HTMLElement: 'readonly',
+        HTMLDivElement: 'readonly',
+        HTMLInputElement: 'readonly',
+        Event: 'readonly',
+        MouseEvent: 'readonly',
+        KeyboardEvent: 'readonly',
+        File: 'readonly',
+        Blob: 'readonly',
       },
     },
     rules: {
