@@ -11,14 +11,28 @@ import DefaultLayout from '@/layouts/DefaultLayout.vue'
  */
 const viewModules = import.meta.glob('@/views/**/*.vue')
 
-function loadView(component: string) {
-  // 后端菜单 component 形如 "system/user/index"，但 src/views 目录下没有 system/ 这一层
-  // （直接是 user/index.vue）。约定剥掉首段再查；如需保留首段，迁移 src/views 结构后再去掉这段。
-  const segments = component.split('/').filter(Boolean)
-  const relativePath = segments.slice(1).join('/') || segments.join('/')
-  const module = viewModules[`/src/views/${relativePath}.vue`]
+/**
+ * 加载菜单对应的视图组件。
+ *
+ * <p>约定：**literal path**——component 即 vue 文件相对 `src/views/` 的路径、
+ * 不含 `.vue` 后缀。例如：
+ * <ul>
+ *   <li>{@code user/index} → {@code src/views/user/index.vue}</li>
+ *   <li>{@code workflow/MyApplications} → {@code src/views/workflow/MyApplications.vue}</li>
+ * </ul>
+ *
+ * <p>如果某条菜单 component 拼错 / 对应页面尚未实现（旧菜单留下或新模块刚接入），
+ * **返回 null 而非抛错**，由调用方跳过该菜单——避免单条坏数据让整个 dynamic route
+ * 注入失败、登录后白屏。
+ */
+function loadView(component: string): unknown {
+  const module = viewModules[`/src/views/${component}.vue`]
   if (!module) {
-    throw new Error(`视图文件不存在: @/views/${relativePath}.vue`)
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[sea] 菜单 component="${component}" 找不到视图 @/views/${component}.vue，已跳过该菜单`,
+    )
+    return null
   }
   return module
 }
@@ -57,13 +71,15 @@ function convertMenu(
   if (menu.menuType === MENU_TYPE.MENU) {
     // MENU 类型必须有 component 才能成为可访问路由
     if (!menu.component) return null
+    const componentLoader = loadView(menu.component)
+    if (componentLoader == null) return null
     const name = `dyn_${menu.id}`
     dynNames.names.add(name)
     return {
       // 顶级路由用绝对路径；子路由用相对路径（取最后一段）
       path: asChild ? lastPathSegment(menu.path) : ensureLeadingSlash(menu.path),
       name,
-      component: loadView(menu.component),
+      component: componentLoader,
       meta: { title: menu.menuName, perms: menu.perms },
     }
   }
