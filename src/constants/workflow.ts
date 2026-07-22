@@ -50,3 +50,15 @@ export const MODEL_NAME_MAX_LENGTH = 100
 
 /** 业务描述最大长度 */
 export const MODEL_DESC_MAX_LENGTH = 500
+
+// ============ 设计器布局常量 ============
+
+/** Palette 宽度（px）—— bpmn-js palette 默认 50，但 Flowable Modeler 用 ~60 更舒展 */
+export const BPMN_PALETTE_WIDTH = 60
+
+/** Minimap 尺寸（px） */
+export const BPMN_MINIMAP_WIDTH = 200
+export const BPMN_MINIMAP_HEIGHT = 140
+
+/** Linter 面板最大高度（px） */
+export const BPMN_LINTER_MAX_HEIGHT = 240

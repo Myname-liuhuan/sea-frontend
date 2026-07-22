@@ -1,36 +1,75 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+// bpmn-js 自带 CSS 必须作为全局副作用导入，不能放进 scoped style 块
+// 否则 scoped 会给所有选择器加 data-v-XXX 属性，把 .djs-palette { position:absolute } 这类默认样式盖掉
+import 'bpmn-js/dist/assets/diagram-js.css'
+import 'bpmn-js/dist/assets/bpmn-font/css/bpmn.css'
+import 'bpmn-js/dist/assets/bpmn-js.css'
+import 'diagram-js-minimap/assets/diagram-js-minimap.css'
+
+import { computed, onMounted, ref } from 'vue'
+import { Message } from '@arco-design/web-vue'
 import { useModelDesigner } from '@/hooks/useModelDesigner'
 import {
   BPMN_CANVAS_MIN_HEIGHT,
   BPMN_PROPERTIES_PANEL_WIDTH,
   WORKFLOW_MODEL_PERMS,
 } from '@/constants/workflow'
+import LinterPanel from './components/LinterPanel.vue'
+import ZoomControls from './components/ZoomControls.vue'
+import MinimapPanel from './components/MinimapPanel.vue'
+import VersionsPanel from './components/VersionsPanel.vue'
+import DiffView from './components/DiffView.vue'
+import FlowablePropertyPanel from './components/FlowablePropertyPanel.vue'
 
 const canvasRef = ref<HTMLDivElement | null>(null)
-const panelRef = ref<HTMLDivElement | null>(null)
 
 const {
   metaForm,
   loading,
   saving,
   deploying,
+  modeler,
+  lintWarnings,
+  modelId,
+  currentXml,
   initModeler,
   saveMeta,
   saveBpmn,
   deploy,
+  regenerateIds,
+  applyHistoryXml,
 } = useModelDesigner()
 
+const modelerForZoom = computed(() => modeler.value as unknown)
+const modelerForPanel = computed(() => modeler.value as { get: (n: string) => unknown } | null)
+
+/** Diff 弹窗 */
+const diffOpen = ref(false)
+const diffVersion = ref<number | null>(null)
+const diffTargetXml = ref<string>('')
+
+function onShowDiff(payload: { version: number; xml: string }): void {
+  diffVersion.value = payload.version
+  diffTargetXml.value = payload.xml
+  diffOpen.value = true
+}
+
+async function onRolledBack(): Promise<void> {
+  if (diffVersion.value == null) return
+  await applyHistoryXml(diffVersion.value)
+  Message.success('画布已重载为回滚版本')
+}
+
 onMounted(async () => {
-  if (canvasRef.value && panelRef.value) {
-    await initModeler(canvasRef.value, panelRef.value)
+  if (canvasRef.value) {
+    await initModeler(canvasRef.value)
   }
 })
 </script>
 
 <template>
   <div class="designer-page">
-    <!-- 顶部工具栏 -->
+    <!-- 顶部元数据工具栏 -->
     <div class="designer-toolbar">
       <div class="meta-form">
         <div class="form-item">
@@ -84,32 +123,62 @@ onMounted(async () => {
         >
           {{ deploying ? '部署中…' : '部署' }}
         </button>
+        <button
+          class="btn btn-default"
+          :disabled="!modeler"
+          v-has-permi="WORKFLOW_MODEL_PERMS.WRITE"
+          title="把所有节点 ID 重命名为 类型_序号 风格"
+          @click="regenerateIds"
+        >
+          重置 ID
+        </button>
       </div>
     </div>
 
-    <!-- 画布 + 属性面板 -->
+    <!-- 三栏：Palette | Canvas + Minimap + Zoom + Lint + Versions | Properties -->
     <div class="designer-body">
+      <div class="designer-palette">
+        <div class="designer-canvas">
+          <div
+            ref="canvasRef"
+            class="bpmn-canvas-host"
+            :style="{ minHeight: BPMN_CANVAS_MIN_HEIGHT + 'px' }"
+          />
+          <MinimapPanel v-if="modeler" />
+          <ZoomControls v-if="modeler" :modeler="modelerForZoom" />
+          <LinterPanel :warnings="lintWarnings" />
+          <VersionsPanel
+            :model-id="modelId"
+            :current-xml="currentXml"
+            @diff="onShowDiff"
+            @rolled-back="onRolledBack"
+          />
+          <div v-if="loading" class="loading-mask">加载中…</div>
+        </div>
+      </div>
+
       <div
-        ref="canvasRef"
-        class="bpmn-canvas"
-        :style="{ minHeight: BPMN_CANVAS_MIN_HEIGHT + 'px' }"
-      />
-      <div
-        ref="panelRef"
-        class="bpmn-panel"
+        class="designer-properties"
         :style="{ width: BPMN_PROPERTIES_PANEL_WIDTH + 'px' }"
-      />
-      <div v-if="loading" class="loading-mask">加载中…</div>
+      >
+        <FlowablePropertyPanel :modeler="modelerForPanel" />
+      </div>
     </div>
+
+    <!-- Diff 弹窗 -->
+    <DiffView
+      v-if="diffOpen && diffVersion != null"
+      :baseline="currentXml"
+      :target="diffTargetXml"
+      :baseline-label="`当前版本`"
+      :target-label="`历史 v${diffVersion}`"
+      @close="diffOpen = false"
+    />
   </div>
 </template>
 
 <style scoped lang="scss">
-/* bpmn-js 自带 css 仅在组件 scope 内生效，避免污染全局 */
-@import 'bpmn-js/dist/assets/diagram-js.css';
-@import 'bpmn-js/dist/assets/bpmn-font/css/bpmn.css';
-@import 'bpmn-js/dist/assets/bpmn-js.css';
-/* bpmn-js-properties-panel 不附带 css，由 JS 注入到 head */
+/* bpmn-js / minimap 的 css 已通过 <script> 全局 import，避免 scoped 加 data-v 属性覆盖默认 position */
 
 .designer-page {
   display: flex;
@@ -212,19 +281,34 @@ onMounted(async () => {
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-light);
   overflow: hidden;
-  position: relative;
 }
 
-.bpmn-canvas {
+.designer-palette {
+  flex: 1;
+  display: flex;
+  position: relative;
+  min-width: 0;
+}
+
+.designer-canvas {
   flex: 1;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.bpmn-canvas-host {
+  flex: 1;
+  position: relative;
+  min-width: 0;
 
   :deep(.djs-container) {
     background: var(--bg-tertiary);
   }
 }
 
-.bpmn-panel {
+.designer-properties {
   border-left: 1px solid var(--border-light);
   overflow-y: auto;
   background: var(--bg-secondary);

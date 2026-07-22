@@ -218,3 +218,15 @@ export interface DeployModelResult {
   deployedProcessDefinitionIds: string[]
   version: number
 }
+
+/** 流程模型历史版本（不含 bpmn_xml 全文） */
+export interface WorkflowModelVersion {
+  id: number
+  modelId: string
+  version: number
+  changeComment?: string
+  creatorId?: number
+  creatorName?: string
+  createTime: string
+  latest: boolean
+}

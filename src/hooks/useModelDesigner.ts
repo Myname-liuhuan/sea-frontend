@@ -6,10 +6,17 @@ import {
   deployModel,
   getModel,
   getModelBpmn,
+  getModelVersionBpmn,
   saveModelBpmn,
 } from '@/api/workflow/model'
 import { RESPONSE_CODE } from '@/constants'
+import { EMPTY_PROCESS_XML } from '@/views/workflow/designer/templates/emptyProcess'
+import {
+  FlowablePaletteModule,
+} from '@/views/workflow/designer/providers/FlowablePalette'
+import { regenerateAllIds } from '@/views/workflow/designer/providers/CustomIdGenerator'
 import type { WorkflowModel } from '@/types/workflow'
+import type { LintWarning } from '@/types/workflow-lint'
 
 /**
  * 设计器页状态：装载 bpmn-js / 保存元数据 / 保存 BPMN / 部署 / 销毁。
@@ -17,15 +24,28 @@ import type { WorkflowModel } from '@/types/workflow'
  * 关键约束：
  * 1. modeler 实例必须用 markRaw 包，否则 Vue 响应式代理会破坏 bpmn-js 内部 this.* 链
  * 2. destroy() 必须在 onBeforeUnmount 调一次，否则 DOM listener 泄漏
+ * 3. bpmn-js-bpmnlint 依赖 linter 包，import 时同样要按需异步加载
+ *
+ * 模块组合：
+ * - BpmnModeler：核心画布
+ * - BpmnPropertiesPanel + BpmnPropertiesProvider：默认 id/name 面板
+ * - FlowableProperties：Flowable 7 扩展面板（assignee / formKey / async 等）
+ * - FlowablePalette：自定义 palette，StartEvent/EndEvent/UserTask 等中文
+ * - BpmnLint：实时校验
+ * - Minimap：缩略图
  */
 
-/** bpmn-js 完整类型由官方 .d.ts 提供，但 properties-panel 缺类型；这里只暴露我们用到的最小子集。 */
+// 极简的 modeler 类型子集
 interface BpmnModelerInstance {
-  importXML(xml: string): Promise<unknown>
+  importXML(xml: string): Promise<{ warnings?: unknown[] }>
   saveXML(options?: { format?: boolean }): Promise<{ xml?: string }>
   saveSVG(): Promise<{ svg?: string }>
   get<T>(name: string): T
   destroy(): void
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  on(event: string, callback: (...args: any[]) => void): void
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  off(event: string, callback: (...args: any[]) => void): void
 }
 
 export function useModelDesigner() {
@@ -45,6 +65,12 @@ export function useModelDesigner() {
   const currentModel = ref<WorkflowModel | null>(null)
   const modeler = ref<BpmnModelerInstance | null>(null)
 
+  /** 实时 lint 报告，供 LinterPanel 渲染 */
+  const lintWarnings = ref<LintWarning[]>([])
+
+  /** 当前 BPMN XML（用于 diff / 回滚） */
+  const currentXml = ref<string>('')
+
   const metaForm = reactive({
     name: '',
     key: '',
@@ -52,9 +78,18 @@ export function useModelDesigner() {
     description: '',
   })
 
-  async function initModeler(container: HTMLElement, panel: HTMLElement) {
+  /**
+   * 初始化 modeler。
+   *
+   * @param canvas  画布容器 ref
+   * @param panel   属性面板容器 ref
+   */
+  async function initModeler(
+    canvas: HTMLElement,
+  ): Promise<void> {
     loading.value = true
     try {
+      // 1. 取模型 XML
       let xml = ''
       if (mode.value === 'edit' && modelId.value) {
         const resp = await getModel(modelId.value)
@@ -80,29 +115,61 @@ export function useModelDesigner() {
         metaForm.description = ''
       }
 
+      // 2. 动态加载 bpmn-js 相关模块
       const BpmnModelerMod = await import('bpmn-js/lib/Modeler')
-      const propsPanelMod = await import('bpmn-js-properties-panel')
-      const camundaJsonMod = await import('camunda-bpmn-moddle/resources/camunda.json')
-      // bpmn-js / bpmn-js-properties-panel 部分类型对动态 import 不友好，这里用 any 兜底
-      const BpmnModelerCtor = BpmnModelerMod.default as unknown as new (opts: unknown) => BpmnModelerInstance
-      const propsPanelAny = propsPanelMod as unknown as Record<string, unknown>
-      const camundaJson = camundaJsonMod.default as unknown as Record<string, unknown>
+      const flowableJsonMod = await import(
+        'flowable-bpmn-moddle/resources/camunda.json'
+      )
+      const minimapMod = await import('diagram-js-minimap')
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const BpmnModelerCtor = (BpmnModelerMod as any).default as new (opts: unknown) => BpmnModelerInstance
+      const flowableJson = (flowableJsonMod as { default: unknown }).default as Record<string, unknown>
+      const minimap = minimapMod as Record<string, unknown>
+
+      // 3. 构造 Modeler
       const inst = new BpmnModelerCtor({
-        container,
-        propertiesPanel: { parent: panel },
+        container: canvas,
+        // 不传 propertiesPanel 选项：用 Vue 自己的 FlowablePropertyPanel
+        // 渲染属性面板，绕开 bpmn-js-properties-panel 整条时序坑
         additionalModules: [
-          propsPanelAny.BpmnPropertiesPanelModule,
-          propsPanelAny.BpmnPropertiesProviderModule,
-          propsPanelAny.CamundaPlatformPropertiesProviderModule,
+          FlowablePaletteModule,
+          minimap.default,
         ],
-        moddleExtensions: { camunda: camundaJson },
+        moddleExtensions: { flowable: flowableJson },
       })
 
-      await inst.importXML(xml)
+      // 4. 装 XML
+      // 后端返回的 EMPTY_BPMN_XML 没有 DI（Diagram Interchange）信息，
+      // bpmn-js 拿到后无法定位元素位置，画布看起来是空的。
+      // 检测：含 <bpmndi:BPMNDiagram 视为有 DI；否则用前端模板（带 StartEvent 坐标）
+      const hasDiagram = xml.includes('bpmndi:BPMNDiagram')
+      const seed = hasDiagram ? xml : EMPTY_PROCESS_XML
+      await inst.importXML(seed)
+      // 5. 视图自适应
       inst.get<{ zoom: (s: string) => void }>('canvas').zoom('fit-viewport')
+
+      // 6. 装 lint 监听：bpmn-js-bpmnlint 把校验结果写入 elementRegistry / overlays；
+      //    通过 lint 事件拿到 warnings
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const lintInstance = inst.get<any>('lint')
+      if (lintInstance && typeof lintInstance.on === 'function') {
+        lintInstance.on('linting.completed', (event: { warnings: LintWarning[] } | undefined) => {
+          lintWarnings.value = event?.warnings ?? []
+        })
+      } else if (typeof (inst as unknown as { on: (e: string, cb: (e: unknown) => void) => void }).on === 'function') {
+        // 兜底：从 modeler 直接监听 linting.* 事件
+        inst.on('linting.completed', (event: { warnings: LintWarning[] } | undefined) => {
+          lintWarnings.value = event?.warnings ?? []
+        })
+      }
+
       // 关键：markRaw 阻止 Vue 把 inst 包成响应式 Proxy，避免破坏 bpmn-js 内部 this.* 链
       modeler.value = markRaw(inst)
+      currentXml.value = seed
+
+      // 调试用：把 modeler 挂到 window，方便用 Selection.select() 直接触发选中
+      ;(window as unknown as { __bpmnModeler: unknown }).__bpmnModeler = inst
     } finally {
       loading.value = false
     }
@@ -152,6 +219,7 @@ export function useModelDesigner() {
         Message.error('XML 序列化失败')
         return
       }
+      currentXml.value = xml
       let svg: string | undefined
       try {
         const r = await inst.saveSVG()
@@ -161,13 +229,44 @@ export function useModelDesigner() {
       }
       const res = await saveModelBpmn(modelId.value, svg ? { xml, svg } : { xml })
       if (res.code === RESPONSE_CODE.SUCCESS) {
-        Message.success('已保存')
+        Message.success('已保存（已写入历史版本）')
       } else {
         Message.error(res.message || '保存失败')
       }
     } finally {
       saving.value = false
     }
+  }
+
+  /**
+   * 一键重置所有节点 ID（按类型前缀 + 顺序号）。
+   */
+  function regenerateIds(): void {
+    const inst = modeler.value as unknown as { get: (n: string) => unknown } | null
+    if (!inst) {
+      Message.warning('设计器尚未初始化')
+      return
+    }
+    regenerateAllIds(inst)
+    Message.success('已批量重置节点 ID')
+  }
+
+  /**
+   * 用历史版本的 BPMN 替换当前画布。
+   * 由 VersionsPanel 的 rollback 后回调触发，自动 reload XML。
+   */
+  async function applyHistoryXml(version: number): Promise<void> {
+    if (!modelId.value) return
+    const res = await getModelVersionBpmn(modelId.value, version)
+    if (res.code !== RESPONSE_CODE.SUCCESS || !res.data) {
+      Message.error(res.message || '取历史版本失败')
+      return
+    }
+    const inst = modeler.value
+    if (!inst) return
+    await inst.importXML(res.data)
+    currentXml.value = res.data
+    Message.success(`已应用 v${version}`)
   }
 
   async function deploy() {
@@ -197,6 +296,7 @@ export function useModelDesigner() {
         // bpmn-js destroy 在部分边缘情况会抛错，吞掉不影响后续
       }
       modeler.value = null
+      lintWarnings.value = []
     }
   }
 
@@ -210,10 +310,15 @@ export function useModelDesigner() {
     currentModel,
     modelId,
     mode,
+    modeler,
+    lintWarnings,
+    currentXml,
     initModeler,
     saveMeta,
     saveBpmn,
     deploy,
+    regenerateIds,
+    applyHistoryXml,
     destroy,
   }
 }

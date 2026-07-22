@@ -8,6 +8,7 @@ import type {
   WorkflowModel,
   WorkflowModelListItem,
   WorkflowModelQuery,
+  WorkflowModelVersion,
 } from '@/types/workflow'
 
 /** 流程模型列表（分页） */
@@ -68,4 +69,34 @@ export function cloneModel(
   return request.post(`/workflow/model/${id}/clone`, null, {
     params: { newName },
   })
+}
+
+// ====== 历史版本 ======
+
+/** 列出模型的历史版本（不含 bpmn_xml 全文） */
+export function listModelVersions(
+  modelId: string,
+): Promise<ApiResponse<WorkflowModelVersion[]>> {
+  return request.get(`/workflow/model/history/list/${modelId}`)
+}
+
+/** 取指定历史版本的 BPMN 全文 */
+export function getModelVersionBpmn(
+  modelId: string,
+  version: number,
+): Promise<ApiResponse<string>> {
+  return request.get(`/workflow/model/history/bpmn/${modelId}/${version}`)
+}
+
+/** 回滚到指定历史版本 */
+export function rollbackModelToVersion(
+  modelId: string,
+  version: number,
+  comment?: string,
+): Promise<ApiResponse<number>> {
+  return request.post(
+    `/workflow/model/history/rollback/${modelId}/${version}`,
+    null,
+    { params: { comment } },
+  )
 }
