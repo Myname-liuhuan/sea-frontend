@@ -157,95 +157,10 @@ const columns: DataTableColumn[] = [
   to { opacity: 1; transform: translateY(0); }
 }
 
-.search-section {
-  background: var(--bg-secondary);
-  border-radius: var(--radius-lg);
-  padding: var(--space-lg);
-  margin-bottom: var(--space-md);
-  border: 1px solid var(--border-light);
-}
+/* 共享搜索 / 工具栏样式已迁移到 global.scss */
 
-.search-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-md);
-  align-items: flex-end;
-}
-
-.form-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-
-  label {
-    font-size: 13px;
-    color: var(--text-secondary);
-    font-weight: 500;
-  }
-}
-
-.search-input {
-  width: 180px;
-  height: 36px;
-  padding: 0 12px;
-  font-size: 13px;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  outline: none;
-
-  &:focus {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.06);
-  }
-}
-
-.form-actions {
-  display: flex;
-  gap: var(--space-sm);
-}
-
-.btn {
-  height: 36px;
-  padding: 0 16px;
-  font-size: 13px;
-  font-weight: 500;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  border: none;
-  transition: all var(--transition-base);
-
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
-}
-
-.btn-primary {
-  background: var(--color-primary);
-  color: var(--bg-secondary);
-  &:hover:not(:disabled) { background: var(--color-primary-light); }
-}
-
-.btn-default {
-  background: var(--bg-secondary);
-  color: var(--color-primary-light);
-  border: 1px solid var(--border-color);
-  &:hover { background: var(--bg-primary); }
-}
-
-.toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-md) 0;
-}
-
-.toolbar-title {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-sm);
-
-  .title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
-  .count { font-size: 13px; color: var(--text-tertiary); }
+/* model 页面 keyword 输入框略宽于默认 160px，因为有 key / 业务类型这种长字符串 */
+.model-list-page {
+  .search-input { width: 180px; }
 }
 </style>

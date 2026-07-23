@@ -13,6 +13,7 @@ import { DEFAULT_LIST_PAGE_SIZE, DEFAULT_PAGE_NUM } from '@/constants/workflow'
 export function usePendingApprovals() {
   const searchForm = reactive<WorkflowTaskQuery>({
     urgency: undefined,
+    taskNo: undefined,
   })
 
   const {
@@ -39,11 +40,17 @@ export function usePendingApprovals() {
 
   function handleSearch() {
     pagination.current = 1
-    fetchData({ urgency: searchForm.urgency } as Partial<WorkflowTaskQuery>)
+    // 只把有值的字段传给后端，避免传 undefined 被 axios 序列化成 ?urgency= 这种空参
+    const params: Record<string, unknown> = {}
+    if (searchForm.urgency !== undefined) params.urgency = searchForm.urgency
+    const taskNo = typeof searchForm.taskNo === 'string' ? searchForm.taskNo.trim() : ''
+    if (taskNo) params.taskNo = taskNo
+    fetchData(params as Partial<WorkflowTaskQuery>)
   }
 
   function handleReset() {
     searchForm.urgency = undefined
+    searchForm.taskNo = undefined
     handleSearch()
   }
 

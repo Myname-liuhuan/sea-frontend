@@ -6,6 +6,7 @@ import { usePendingApprovals } from '@/hooks/usePendingApprovals'
 import { WORKFLOW_STATUS_LABEL } from '@/types/workflow'
 
 const {
+  searchForm,
   loading,
   dataSource,
   pagination,
@@ -98,8 +99,25 @@ const modalOkText = () => {
   <div class="pending-approvals-page">
     <div class="search-section">
       <div class="search-form">
+        <div class="form-item">
+          <label>紧急程度</label>
+          <select v-model="searchForm.urgency" class="search-select">
+            <option :value="undefined">全部</option>
+            <option :value="1">普通</option>
+            <option :value="2">紧急</option>
+          </select>
+        </div>
+        <div class="form-item">
+          <label>工单号</label>
+          <input
+            v-model="searchForm.taskNo"
+            placeholder="精确匹配"
+            class="search-input"
+            @keyup.enter="handleSearch"
+          />
+        </div>
         <div class="form-actions">
-          <button class="btn btn-primary" @click="handleSearch">刷新</button>
+          <button class="btn btn-primary" @click="handleSearch">搜索</button>
           <button class="btn btn-default" @click="handleReset">重置</button>
         </div>
       </div>

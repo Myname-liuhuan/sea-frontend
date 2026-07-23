@@ -53,8 +53,8 @@ export const MODEL_DESC_MAX_LENGTH = 500
 
 // ============ 设计器布局常量 ============
 
-/** Palette 宽度（px）—— bpmn-js palette 默认 50，但 Flowable Modeler 用 ~60 更舒展 */
-export const BPMN_PALETTE_WIDTH = 60
+/** Palette 宽度（px）—— bpmn-js palette 默认 50 只能放图标；我们加了中文短标签，需要 88px */
+export const BPMN_PALETTE_WIDTH = 88
 
 /** Minimap 尺寸（px） */
 export const BPMN_MINIMAP_WIDTH = 200

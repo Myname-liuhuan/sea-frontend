@@ -1,259 +1,112 @@
 /**
- * Flowable 风格 Palette：在 bpmn-js 默认节点基础上补全 Flowable 特有任务，
- * 并把所有分组标签翻译为中文。
+ * Flowable 风格 Palette：
+ * 1. 继承 bpmn-js 默认 BpmnPaletteProvider，覆盖其 getPaletteEntries()，
+ *    把每个图标配上中文短标签，丢掉默认的英文 tooltip-only 风格。
+ * 2. 通过 DI 用同名 token `paletteProvider` 替换默认实现，避免双 provider 重复条目。
+ * 3. 用 bpmn-js 的 `html` 字段在 entry 内联图标 + 文字；保留 `title` 作详细 hover 提示。
+ * 4. 用 `separator: true` 在分组之间插入细分隔线。
  *
- * 用法：
- *   new Modeler({
- *     ...,
- *     additionalModules: [
- *       FlowablePalette,
- *       BpmnPropertiesPanelModule,
- *       BpmnPropertiesProviderModule,
- *     ],
- *   })
- *
- * 设计依据：
- * - Flowable Modeler 默认 palette 几乎和 bpmn-js 一致，差别在于：
- *   1) 文案 (Flowable 是英文但加了 tooltip)
- *   2) MailTask / HttpTask 在 Flowable 是 ServiceTask + delegateExpression，
- *      这里我们暴露 ServiceTask 并提示用户选 type=mail/http
- * - 默认 palette 已经覆盖：StartEvent/EndEvent/IntermediateThrowEvent/TimerEvent/
- *   UserTask/ServiceTask/ScriptTask/ExclusiveGateway/ParallelGateway/InclusiveGateway/
- *   SubProcess/CallActivity/DataObjectReference/DataStoreReference，
- *   这里只做中文化 + 排序调整
+ * 为什么用继承而不是注册新 provider：
+ *   - bpmn-js 默认 BpmnPaletteProvider 在 __init__ 阶段就 registerProvider 了自己，
+ *     我们再 registerProvider 一份的话会出现双份条目（图标+默认 vs 图标+中文）。
+ *   - 通过 DI 用同名 token 替换（palette: ['type', BpmnPaletteProvider, ...]）是 bpmn-js
+ *     官方支持的模块覆盖方式（见 bpmn-js/lib/Modeler.js 顶部注释）。
  */
 
-type PaletteAPI = unknown
-type CreateAPI = {
-  start: (event: Event, shape: unknown, hints?: unknown) => void
-}
-type ElementFactoryAPI = {
-  createShape: (opts: { type: string }) => unknown
+import BpmnPaletteProvider from 'bpmn-js/lib/features/palette/PaletteProvider'
+import type {
+  PaletteEntries,
+  PaletteEntry,
+} from 'diagram-js/lib/features/palette/PaletteProvider'
+
+/**
+ * 把图标 + 中文短标签包成单个根元素。
+ *
+ * ⚠️ 必须单根元素！min-dom 的 domify 在多同级元素时返回 DocumentFragment，
+ * bpmn-js 后续对 fragment 调 setAttribute 会抛 "is not a function"。
+ */
+function buildEntryHtml(iconClass: string, label: string): string {
+  const safeLabel = label.replace(/[<>&]/g, (c) =>
+    c === '<' ? '&lt;' : c === '>' ? '&gt;' : '&amp;',
+  )
+  return `<span class="palette-entry-inner"><span class="palette-entry-icon ${iconClass}"></span><span class="palette-entry-label">${safeLabel}</span></span>`
 }
 
 /**
- * 创建 palette action 对象：
- * bpmn-js 期望 action = { dragstart, click } 两个回调，不是单函数。
+ * 用 entry.html + entry.title 覆盖原 entry 的渲染。其它字段（group / action）保持原样。
  */
-type PaletteAction = {
-  dragstart: (event: Event) => unknown
-  click: (event: Event) => unknown
-}
-
-const GROUP = {
-  ACTIVITY: 'activity',
-  GATEWAY: 'gateway',
-  EVENT: 'event',
-  DATA: 'data',
-  TOOLS: 'tools',
-} as const
-
-/**
- * 创建并注册一个 palette 条目的工具函数。
- *
- * bpmn-js 期望 action 形如 { dragstart, click }，每个回调接收 event，
- * 内部调 create.start(event, shape)。如果只传函数，会触发 "Cannot read
- * properties of undefined (reading 'context')" 报错。
- */
-function makeCreateAction(
-  create: CreateAPI,
-  elementFactory: ElementFactoryAPI,
-  type: string,
-): PaletteAction {
-  const handler = (event: Event): unknown => {
-    const shape = elementFactory.createShape({ type })
-    create.start(event, shape)
-    return shape
-  }
+function localize(entry: PaletteEntry, label: string, detailedTitle: string): PaletteEntry {
+  const iconClass =
+    typeof entry.className === 'string'
+      ? entry.className.split(/\s+/).filter((c) => c.startsWith('bpmn-icon-'))[0] ?? ''
+      : ''
   return {
-    dragstart: handler,
-    click: handler,
+    ...entry,
+    className: 'palette-entry',
+    html: iconClass ? buildEntryHtml(iconClass, label) : entry.html,
+    title: detailedTitle,
   }
 }
 
-export default class FlowablePaletteProvider {
-  static $inject = ['palette', 'create', 'elementFactory']
+/**
+ * 替换默认 BpmnPaletteProvider：调用父类拿到默认 entries，再遍历加上中文标签。
+ */
+export default class FlowablePaletteProvider extends BpmnPaletteProvider {
+  // 继承父类的 $inject，TypeScript 不识别所以保留父类声明
+  declare $inject: string[]
 
-  private palette: PaletteAPI
-  private create: CreateAPI
-  private elementFactory: ElementFactoryAPI
+  /**
+   * 必须保持和父类相同的 $inject 数组，否则 DI 拿不到依赖。
+   * 这里直接复用父类静态字段。
+   */
+  static $inject = (BpmnPaletteProvider as unknown as { $inject: string[] }).$inject
 
-  constructor(
-    palette: PaletteAPI,
-    create: CreateAPI,
-    elementFactory: ElementFactoryAPI,
-  ) {
-    this.palette = palette
-    this.create = create
-    this.elementFactory = elementFactory
-    try {
-      ;(palette as { registerProvider: (p: unknown) => void }).registerProvider(
-        this,
-      )
-    } catch (e) {
-      // bpmn-js __init__ 阶段 palette 未就绪会抛 "Cannot read properties of
-      // undefined (reading 'context')"，吞掉后保留默认 palette。
-      console.warn('[FlowablePalette] registerProvider failed (palette not ready), fall back to default', e)
+  getPaletteEntries(): PaletteEntries {
+    // 调用父类拿到默认 entries（hand-tool / lasso-tool / start-event / task / ...）
+    const entries = super.getPaletteEntries() as PaletteEntries
+
+    // 翻译映射：entry id → (中文短标签, 详细 hover 提示)
+    const LABELS: Record<string, readonly [string, string]> = {
+      'hand-tool': ['抓手', '抓手工具（拖动画布）'],
+      'lasso-tool': ['框选', '框选工具（拉框选中多个节点）'],
+      'space-tool': ['空间', '空间工具（拖动创建 / 调整节点间距）'],
+      'global-connect-tool': ['连线', '全局连线工具（拖出连线到任意节点）'],
+      'create.start-event': ['开始', '开始事件（流程入口）'],
+      'create.intermediate-event': ['中间', '中间事件（消息 / 定时器）'],
+      'create.end-event': ['结束', '结束事件（流程出口）'],
+      'create.exclusive-gateway': ['排他', '排他网关（条件分支）'],
+      'create.task': ['任务', '普通任务（抽象节点）'],
+      'create.data-object': ['数据', '数据对象'],
+      'create.data-store': ['存储', '数据存储'],
+      'create.subprocess-expanded': ['子流程', '子流程（带开始事件的复合节点）'],
+      'create.participant-expanded': ['泳道', '泳道 / 参与者（多流程协作）'],
+      'create.group': ['分组', '分组（视觉分组，无业务语义）'],
     }
-  }
 
-  getPaletteEntries(): Record<string, unknown> {
+    const result: PaletteEntries = {}
+    for (const [id, entry] of Object.entries(entries)) {
+      const localized = LABELS[id]
+      result[id] = localized ? localize(entry, localized[0], localized[1]) : entry
+    }
+
+    // 在分组之间补细分隔线（separator: true 渲染为 <hr class="separator" />）
+    // PaletteEntry 类型要求 action 字段，但 separator 不需要 action —— 用 satisfies
+    // 让类型更精确地表达"可选 action"
     return {
-      ...buildEventEntries(this.create, this.elementFactory),
-      ...buildActivityEntries(this.create, this.elementFactory),
-      ...buildGatewayEntries(this.create, this.elementFactory),
-      ...buildDataEntries(this.create, this.elementFactory),
-      ...buildToolEntries(this.palette),
+      ...result,
+      __separator_after_event: { separator: true } as PaletteEntry,
+      __separator_after_gateway: { separator: true } as PaletteEntry,
+      __separator_after_activity: { separator: true } as PaletteEntry,
+      __separator_after_data: { separator: true } as PaletteEntry,
     }
   }
 }
 
 /**
- * 导出 module config 形式给 bpmn-js DI 用：
- *   additionalModules: [FlowablePaletteModule, ...]
- * 比起直接传 class，module config 形式明确告诉 DI 在 __init__ 阶段实例化 provider。
+ * module config：通过 DI 用同名 token `paletteProvider` 覆盖默认实现，
+ * bpmn-js 内部会用我们的 FlowablePaletteProvider 替换默认 PaletteProvider，
+ * 这样不会双注册。
  */
 export const FlowablePaletteModule = {
-  __init__: ['flowablePaletteProvider'],
-  flowablePaletteProvider: ['type', FlowablePaletteProvider],
-}
-
-function buildEventEntries(
-  create: CreateAPI,
-  elementFactory: ElementFactoryAPI,
-): Record<string, unknown> {
-  return {
-    'create.start-event': {
-      group: GROUP.EVENT,
-      className: 'bpmn-icon-start-event-none',
-      title: '开始事件（流程入口）',
-      action: makeCreateAction(create, elementFactory, 'bpmn:StartEvent'),
-    },
-    'create.intermediate-throw-event': {
-      group: GROUP.EVENT,
-      className: 'bpmn-icon-intermediate-event-none',
-      title: '中间事件（消息 / 定时器）',
-      action: makeCreateAction(create, elementFactory, 'bpmn:IntermediateThrowEvent'),
-    },
-    'create.end-event': {
-      group: GROUP.EVENT,
-      className: 'bpmn-icon-end-event-none',
-      title: '结束事件（流程出口）',
-      action: makeCreateAction(create, elementFactory, 'bpmn:EndEvent'),
-    },
-  }
-}
-
-function buildActivityEntries(
-  create: CreateAPI,
-  elementFactory: ElementFactoryAPI,
-): Record<string, unknown> {
-  return {
-    'create.user-task': {
-      group: GROUP.ACTIVITY,
-      className: 'bpmn-icon-user-task',
-      title: '用户任务（人工审批）',
-      action: makeCreateAction(create, elementFactory, 'bpmn:UserTask'),
-    },
-    'create.service-task': {
-      group: GROUP.ACTIVITY,
-      className: 'bpmn-icon-service-task',
-      title: '服务任务（系统自动处理 / Java 类 / 表达式 / HTTP / 邮件）',
-      action: makeCreateAction(create, elementFactory, 'bpmn:ServiceTask'),
-    },
-    'create.script-task': {
-      group: GROUP.ACTIVITY,
-      className: 'bpmn-icon-script-task',
-      title: '脚本任务（执行一段脚本）',
-      action: makeCreateAction(create, elementFactory, 'bpmn:ScriptTask'),
-    },
-    'create.sub-process-expanded': {
-      group: GROUP.ACTIVITY,
-      className: 'bpmn-icon-sub-process-expanded',
-      title: '子流程',
-      action: makeCreateAction(create, elementFactory, 'bpmn:SubProcess'),
-    },
-  }
-}
-
-function buildGatewayEntries(
-  create: CreateAPI,
-  elementFactory: ElementFactoryAPI,
-): Record<string, unknown> {
-  return {
-    'create.exclusive-gateway': {
-      group: GROUP.GATEWAY,
-      className: 'bpmn-icon-gateway-xor',
-      title: '排他网关（条件分支）',
-      action: makeCreateAction(create, elementFactory, 'bpmn:ExclusiveGateway'),
-    },
-    'create.parallel-gateway': {
-      group: GROUP.GATEWAY,
-      className: 'bpmn-icon-gateway-parallel',
-      title: '并行网关（fork / join）',
-      action: makeCreateAction(create, elementFactory, 'bpmn:ParallelGateway'),
-    },
-    'create.inclusive-gateway': {
-      group: GROUP.GATEWAY,
-      className: 'bpmn-icon-gateway-or',
-      title: '包容网关（多条件聚合）',
-      action: makeCreateAction(create, elementFactory, 'bpmn:InclusiveGateway'),
-    },
-  }
-}
-
-function buildDataEntries(
-  create: CreateAPI,
-  elementFactory: ElementFactoryAPI,
-): Record<string, unknown> {
-  return {
-    'create.data-object': {
-      group: GROUP.DATA,
-      className: 'bpmn-icon-data-object',
-      title: '数据对象',
-      action: makeCreateAction(create, elementFactory, 'bpmn:DataObjectReference'),
-    },
-    'create.data-store': {
-      group: GROUP.DATA,
-      className: 'bpmn-icon-data-store',
-      title: '数据存储',
-      action: makeCreateAction(create, elementFactory, 'bpmn:DataStoreReference'),
-    },
-  }
-}
-
-function buildToolEntries(
-  palette: PaletteAPI,
-): Record<string, unknown> {
-  const trigger = (event: string) => () =>
-    (palette as { trigger: (e: string) => void }).trigger(event)
-  return {
-    'tool.lasso': {
-      group: GROUP.TOOLS,
-      className: 'bpmn-icon-lasso-tool',
-      title: '框选工具',
-      action: {
-        dragstart: trigger('lasso.toggle'),
-        click: trigger('lasso.toggle'),
-      },
-    },
-    'tool.hand': {
-      group: GROUP.TOOLS,
-      className: 'bpmn-icon-hand-tool',
-      title: '抓手工具',
-      action: {
-        dragstart: trigger('hand.toggle'),
-        click: trigger('hand.toggle'),
-      },
-    },
-    'tool.create-space': {
-      group: GROUP.TOOLS,
-      className: 'bpmn-icon-space-tool',
-      title: '空间工具',
-      action: {
-        dragstart: trigger('space.toggle'),
-        click: trigger('space.toggle'),
-      },
-    },
-  }
+  paletteProvider: ['type', FlowablePaletteProvider],
 }

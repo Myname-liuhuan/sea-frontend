@@ -306,6 +306,86 @@ onMounted(async () => {
   :deep(.djs-container) {
     background: var(--bg-tertiary);
   }
+
+  /*
+   * Palette 视觉：每个 entry 纵向 icon + 中文短标签，组之间用细分隔线分组。
+   * bpmn-js 把 palette DOM 注入到 canvas host 内，所以 :deep() 能选中。
+   *
+   * 注意：图标 .bpmn-icon-* 的字体字符由 bpmn-font 的 ::before 输出，必须挂在
+   * 元素本身 —— FlowablePaletteProvider 已经把 className 复制到 .palette-entry-icon 上，
+   * 这里只负责大小 / 排版。
+   */
+  :deep(.djs-palette) {
+    top: 16px;
+    left: 16px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-light);
+    background: var(--bg-secondary);
+    box-shadow: var(--shadow-md);
+  }
+
+  :deep(.djs-palette .group) {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px;
+  }
+
+  :deep(.djs-palette .palette-entry) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 76px;
+    height: 56px;
+    border-radius: var(--radius-sm);
+    cursor: grab;
+    color: var(--text-secondary);
+    transition: background var(--transition-fast), color var(--transition-fast),
+      transform var(--transition-fast);
+
+    &:hover {
+      background: var(--bg-tertiary);
+      color: var(--color-primary);
+    }
+
+    &:active {
+      cursor: grabbing;
+      transform: scale(0.96);
+    }
+  }
+
+  /* buildEntryHtml 输出 <span class="palette-entry-inner"> 包裹图标 + 文字 */
+  :deep(.djs-palette .palette-entry-inner) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    pointer-events: none;
+  }
+
+  :deep(.djs-palette .palette-entry-icon) {
+    font-size: 22px;
+    line-height: 1;
+    color: inherit;
+  }
+
+  :deep(.djs-palette .palette-entry-label) {
+    font-size: 11px;
+    line-height: 1.2;
+    color: inherit;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+  }
+
+  /* 组之间细分隔线 —— bpmn-js 用 <hr class="separator"> */
+  :deep(.djs-palette .separator) {
+    margin: 4px 6px;
+    padding: 0;
+    height: 1px;
+    border: none;
+    background: var(--border-light);
+  }
 }
 
 .designer-properties {

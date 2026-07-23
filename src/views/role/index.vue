@@ -221,85 +221,9 @@ const {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.search-section {
-  background: var(--bg-secondary);
-  border-radius: var(--radius-lg);
-  padding: var(--space-lg);
-  margin-bottom: var(--space-md);
-  border: 1px solid var(--border-light);
-}
-
-.search-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-md);
-  align-items: flex-end;
-}
-
-.form-item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-
-  label {
-    font-size: 13px;
-    color: var(--text-secondary);
-    font-weight: 500;
-  }
-}
-
-.search-input, .search-select {
-  height: 36px;
-  padding: 0 12px;
-  font-size: 13px;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  outline: none;
-
-  &:focus {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.06);
-  }
-}
-
-.search-input { width: 160px; }
-.search-select { width: 120px; }
-
-.form-actions {
-  display: flex;
-  gap: var(--space-sm);
-}
-
-.btn {
-  height: 36px;
-  padding: 0 16px;
-  font-size: 13px;
-  font-weight: 500;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  border: none;
-  transition: all var(--transition-base);
-}
-
-.btn-primary {
-  background: var(--color-primary);
-  color: var(--bg-secondary);
-  &:hover:not(:disabled) { background: var(--color-primary-light); }
-}
-
-.btn-default {
-  background: var(--bg-secondary);
-  color: var(--color-primary-light);
-  border: 1px solid var(--border-color);
-  &:hover { background: var(--bg-primary); }
-}
-
-.toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--space-md) 0;
-}
+/* .search-section / .search-form / .form-item / .search-input / .search-select /
+   .form-actions / .btn / .btn-primary / .btn-default / .toolbar / .toolbar-title
+   已迁移到 global.scss 复用，role / user / workflow 各页直接用 */
 
 .toolbar-title {
   display: flex;
