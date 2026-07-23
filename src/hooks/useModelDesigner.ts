@@ -11,10 +11,8 @@ import {
 } from '@/api/workflow/model'
 import { RESPONSE_CODE } from '@/constants'
 import { EMPTY_PROCESS_XML } from '@/views/workflow/designer/templates/emptyProcess'
-import {
-  FlowablePaletteModule,
-} from '@/views/workflow/designer/providers/FlowablePalette'
 import { regenerateAllIds } from '@/views/workflow/designer/providers/CustomIdGenerator'
+import { ChineseTranslateModule } from '@/views/workflow/designer/providers/ChineseI18n'
 import type { WorkflowModel } from '@/types/workflow'
 import type { LintWarning } from '@/types/workflow-lint'
 
@@ -26,13 +24,16 @@ import type { LintWarning } from '@/types/workflow-lint'
  * 2. destroy() 必须在 onBeforeUnmount 调一次，否则 DOM listener 泄漏
  * 3. bpmn-js-bpmnlint 依赖 linter 包，import 时同样要按需异步加载
  *
- * 模块组合：
+ * 模块组合（全部用 bpmn-io 社区包）：
  * - BpmnModeler：核心画布
- * - BpmnPropertiesPanel + BpmnPropertiesProvider：默认 id/name 面板
- * - FlowableProperties：Flowable 7 扩展面板（assignee / formKey / async 等）
- * - FlowablePalette：自定义 palette，StartEvent/EndEvent/UserTask 等中文
- * - BpmnLint：实时校验
+ * - BpmnPropertiesPanelModule + BpmnPropertiesProviderModule：id / name / 通用属性
+ * - CamundaPlatformPropertiesProviderModule：assignee / candidateGroups / formKey /
+ *   async / 多实例 / 监听器 / 错误边界 / 定时器 / 表达式 等 Flowable / Camunda
+ *   通用扩展（这些场景官方实现的覆盖度比我们手撸的完整得多 —— 我们之前
+ *   只支持 5 种元素类型，社区版支持全部 BPMN + Camunda 扩展）
  * - Minimap：缩略图
+ * - BpmnLint：实时校验
+ * - CustomIdGenerator：Sea 特有的"批量重置 ID"功能，社区包没有
  */
 
 // 极简的 modeler 类型子集
@@ -82,10 +83,11 @@ export function useModelDesigner() {
    * 初始化 modeler。
    *
    * @param canvas  画布容器 ref
-   * @param panel   属性面板容器 ref
+   * @param panel   属性面板容器 ref（bpmn-js-properties-panel 挂载点）
    */
   async function initModeler(
     canvas: HTMLElement,
+    panel: HTMLElement,
   ): Promise<void> {
     loading.value = true
     try {
@@ -121,6 +123,8 @@ export function useModelDesigner() {
         'flowable-bpmn-moddle/resources/camunda.json'
       )
       const minimapMod = await import('diagram-js-minimap')
+      // bpmn-js-properties-panel 官方三件套：面板渲染 + BPMN 通用属性 + Camunda/Flowable 扩展
+      const propsPanelMod = await import('bpmn-js-properties-panel')
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const BpmnModelerCtor = (BpmnModelerMod as any).default as new (opts: unknown) => BpmnModelerInstance
@@ -130,10 +134,19 @@ export function useModelDesigner() {
       // 3. 构造 Modeler
       const inst = new BpmnModelerCtor({
         container: canvas,
-        // 不传 propertiesPanel 选项：用 Vue 自己的 FlowablePropertyPanel
-        // 渲染属性面板，绕开 bpmn-js-properties-panel 整条时序坑
+        // 让社区属性面板直接挂到 Vue 提供的容器里：
+        propertiesPanel: { parent: panel },
         additionalModules: [
-          FlowablePaletteModule,
+          // bpmn-js-properties-panel 三件套 —— 完整覆盖 BPMN + Camunda/Flowable 扩展
+          // （id / name / assignee / candidateGroups / formKey / async / 多实例 / 监听器 / 定时器 / ...）
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (propsPanelMod as any).BpmnPropertiesPanelModule,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (propsPanelMod as any).BpmnPropertiesProviderModule,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (propsPanelMod as any).CamundaPlatformPropertiesProviderModule,
+          // 用我们的 translate 替换默认（把 palette / properties panel 文案翻成中文）
+          ChineseTranslateModule,
           minimap.default,
         ],
         moddleExtensions: { flowable: flowableJson },

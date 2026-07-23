@@ -1,10 +1,19 @@
 <script setup lang="ts">
-// bpmn-js 自带 CSS 必须作为全局副作用导入，不能放进 scoped style 块
-// 否则 scoped 会给所有选择器加 data-v-XXX 属性，把 .djs-palette { position:absolute } 这类默认样式盖掉
+// bpmn-js / bpmn-js-properties-panel 自带 CSS 必须作为全局副作用导入，
+// 不能放进 scoped style 块 —— 否则 scoped 会给所有选择器加 data-v-XXX，
+// 把 .djs-palette { position:absolute } 这类默认样式盖掉。
+//
+// 三个 CSS 各自负责：
+// - bpmn-js/dist/assets/diagram-js.css        画布、palette 容器基础样式
+// - bpmn-js/dist/assets/bpmn-font/css/bpmn.css 图标字体（开始/结束/用户任务 等）
+// - bpmn-js/dist/assets/bpmn-js.css            palette 元素默认尺寸
+// - diagram-js-minimap/...css                 缩略图样式
+// - @bpmn-io/properties-panel/...css          官方属性面板
 import 'bpmn-js/dist/assets/diagram-js.css'
 import 'bpmn-js/dist/assets/bpmn-font/css/bpmn.css'
 import 'bpmn-js/dist/assets/bpmn-js.css'
 import 'diagram-js-minimap/assets/diagram-js-minimap.css'
+import '@bpmn-io/properties-panel/assets/properties-panel.css'
 
 import { computed, onMounted, ref } from 'vue'
 import { Message } from '@arco-design/web-vue'
@@ -19,9 +28,9 @@ import ZoomControls from './components/ZoomControls.vue'
 import MinimapPanel from './components/MinimapPanel.vue'
 import VersionsPanel from './components/VersionsPanel.vue'
 import DiffView from './components/DiffView.vue'
-import FlowablePropertyPanel from './components/FlowablePropertyPanel.vue'
 
 const canvasRef = ref<HTMLDivElement | null>(null)
+const propertiesRef = ref<HTMLDivElement | null>(null)
 
 const {
   metaForm,
@@ -41,7 +50,6 @@ const {
 } = useModelDesigner()
 
 const modelerForZoom = computed(() => modeler.value as unknown)
-const modelerForPanel = computed(() => modeler.value as { get: (n: string) => unknown } | null)
 
 /** Diff 弹窗 */
 const diffOpen = ref(false)
@@ -61,8 +69,8 @@ async function onRolledBack(): Promise<void> {
 }
 
 onMounted(async () => {
-  if (canvasRef.value) {
-    await initModeler(canvasRef.value)
+  if (canvasRef.value && propertiesRef.value) {
+    await initModeler(canvasRef.value, propertiesRef.value)
   }
 })
 </script>
@@ -135,34 +143,35 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- 三栏：Palette | Canvas + Minimap + Zoom + Lint + Versions | Properties -->
+    <!-- 三栏：Canvas + Minimap + Zoom + Lint + Versions | Properties -->
     <div class="designer-body">
-      <div class="designer-palette">
-        <div class="designer-canvas">
-          <div
-            ref="canvasRef"
-            class="bpmn-canvas-host"
-            :style="{ minHeight: BPMN_CANVAS_MIN_HEIGHT + 'px' }"
-          />
-          <MinimapPanel v-if="modeler" />
-          <ZoomControls v-if="modeler" :modeler="modelerForZoom" />
-          <LinterPanel :warnings="lintWarnings" />
-          <VersionsPanel
-            :model-id="modelId"
-            :current-xml="currentXml"
-            @diff="onShowDiff"
-            @rolled-back="onRolledBack"
-          />
-          <div v-if="loading" class="loading-mask">加载中…</div>
-        </div>
+      <div class="designer-canvas-wrap">
+        <div
+          ref="canvasRef"
+          class="bpmn-canvas-host"
+          :style="{ minHeight: BPMN_CANVAS_MIN_HEIGHT + 'px' }"
+        />
+        <MinimapPanel v-if="modeler" />
+        <ZoomControls v-if="modeler" :modeler="modelerForZoom" />
+        <LinterPanel :warnings="lintWarnings" />
+        <VersionsPanel
+          :model-id="modelId"
+          :current-xml="currentXml"
+          @diff="onShowDiff"
+          @rolled-back="onRolledBack"
+        />
+        <div v-if="loading" class="loading-mask">加载中…</div>
       </div>
 
+      <!--
+        bpmn-js-properties-panel 通过 propertiesPanel.parent 挂到这个 div，
+        渲染完整的 BPMN + Camunda/Flowable 属性面板（社区包实现，覆盖所有元素类型）。
+      -->
       <div
+        ref="propertiesRef"
         class="designer-properties"
         :style="{ width: BPMN_PROPERTIES_PANEL_WIDTH + 'px' }"
-      >
-        <FlowablePropertyPanel :modeler="modelerForPanel" />
-      </div>
+      />
     </div>
 
     <!-- Diff 弹窗 -->
@@ -178,7 +187,11 @@ onMounted(async () => {
 </template>
 
 <style scoped lang="scss">
-/* bpmn-js / minimap 的 css 已通过 <script> 全局 import，避免 scoped 加 data-v 属性覆盖默认 position */
+/*
+ * 设计原则：bpmn-js / bpmn-js-properties-panel 自带 CSS 已通过 <script> 全局 import，
+ * 这里只做最小覆盖把它对齐到 Sea 设计系统（圆角、间距、字体、配色），
+ * 不重写组件库自己的结构 —— 社区包的成熟度比手撸高得多。
+ */
 
 .designer-page {
   display: flex;
@@ -283,19 +296,12 @@ onMounted(async () => {
   overflow: hidden;
 }
 
-.designer-palette {
+.designer-canvas-wrap {
   flex: 1;
   display: flex;
   position: relative;
   min-width: 0;
-}
-
-.designer-canvas {
-  flex: 1;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
+  background: var(--bg-secondary);
 }
 
 .bpmn-canvas-host {
@@ -308,12 +314,9 @@ onMounted(async () => {
   }
 
   /*
-   * Palette 视觉：每个 entry 纵向 icon + 中文短标签，组之间用细分隔线分组。
-   * bpmn-js 把 palette DOM 注入到 canvas host 内，所以 :deep() 能选中。
-   *
-   * 注意：图标 .bpmn-icon-* 的字体字符由 bpmn-font 的 ::before 输出，必须挂在
-   * 元素本身 —— FlowablePaletteProvider 已经把 className 复制到 .palette-entry-icon 上，
-   * 这里只负责大小 / 排版。
+   * Palette 视觉对齐 Sea 设计系统。
+   * 工具提示（title）由 installChineseI18n() 注入的中文翻译负责，
+   * 这里只负责容器外观 + entry 间距。
    */
   :deep(.djs-palette) {
     top: 16px;
@@ -324,61 +327,18 @@ onMounted(async () => {
     box-shadow: var(--shadow-md);
   }
 
-  :deep(.djs-palette .group) {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    padding: 6px;
-  }
-
-  :deep(.djs-palette .palette-entry) {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 76px;
-    height: 56px;
-    border-radius: var(--radius-sm);
-    cursor: grab;
+  :deep(.djs-palette .entry) {
     color: var(--text-secondary);
-    transition: background var(--transition-fast), color var(--transition-fast),
-      transform var(--transition-fast);
+    transition: color var(--transition-fast), background var(--transition-fast);
+    border-radius: var(--radius-sm);
+    margin: 2px;
 
     &:hover {
-      background: var(--bg-tertiary);
       color: var(--color-primary);
-    }
-
-    &:active {
-      cursor: grabbing;
-      transform: scale(0.96);
+      background: var(--bg-tertiary);
     }
   }
 
-  /* buildEntryHtml 输出 <span class="palette-entry-inner"> 包裹图标 + 文字 */
-  :deep(.djs-palette .palette-entry-inner) {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    pointer-events: none;
-  }
-
-  :deep(.djs-palette .palette-entry-icon) {
-    font-size: 22px;
-    line-height: 1;
-    color: inherit;
-  }
-
-  :deep(.djs-palette .palette-entry-label) {
-    font-size: 11px;
-    line-height: 1.2;
-    color: inherit;
-    font-weight: 500;
-    letter-spacing: 0.2px;
-  }
-
-  /* 组之间细分隔线 —— bpmn-js 用 <hr class="separator"> */
   :deep(.djs-palette .separator) {
     margin: 4px 6px;
     padding: 0;
@@ -390,9 +350,9 @@ onMounted(async () => {
 
 .designer-properties {
   border-left: 1px solid var(--border-light);
-  overflow-y: auto;
   background: var(--bg-secondary);
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .loading-mask {
