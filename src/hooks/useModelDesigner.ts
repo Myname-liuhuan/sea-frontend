@@ -8,6 +8,7 @@ import {
   getModelBpmn,
   getModelVersionBpmn,
   saveModelBpmn,
+  updateModel,
 } from '@/api/workflow/model'
 import { RESPONSE_CODE } from '@/constants'
 import { EMPTY_PROCESS_XML } from '@/views/workflow/designer/templates/emptyProcess'
@@ -132,25 +133,36 @@ export function useModelDesigner() {
       const minimap = minimapMod as Record<string, unknown>
 
       // 3. 构造 Modeler
-      const inst = new BpmnModelerCtor({
-        container: canvas,
-        // 让社区属性面板直接挂到 Vue 提供的容器里：
-        propertiesPanel: { parent: panel },
-        additionalModules: [
-          // bpmn-js-properties-panel 三件套 —— 完整覆盖 BPMN + Camunda/Flowable 扩展
-          // （id / name / assignee / candidateGroups / formKey / async / 多实例 / 监听器 / 定时器 / ...）
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (propsPanelMod as any).BpmnPropertiesPanelModule,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (propsPanelMod as any).BpmnPropertiesProviderModule,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (propsPanelMod as any).CamundaPlatformPropertiesProviderModule,
-          // 用我们的 translate 替换默认（把 palette / properties panel 文案翻成中文）
-          ChineseTranslateModule,
-          minimap.default,
-        ],
-        moddleExtensions: { flowable: flowableJson },
-      })
+      // 内层 try/catch 抓 DI / 模块加载失败 —— 之前失败会被外层 finally 吞掉，
+      // 导致 modeler.value 保持 null，用户点保存按钮报"设计器尚未初始化"，
+      // 但根本原因（模块解析失败 / xml 解析失败）被吞掉了，看不到。
+      let inst: BpmnModelerInstance
+      try {
+        inst = new BpmnModelerCtor({
+          container: canvas,
+          // 让社区属性面板直接挂到 Vue 提供的容器里：
+          propertiesPanel: { parent: panel },
+          additionalModules: [
+            // bpmn-js-properties-panel 三件套 —— 完整覆盖 BPMN + Camunda/Flowable 扩展
+            // （id / name / assignee / candidateGroups / formKey / async / 多实例 / 监听器 / 定时器 / ...）
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (propsPanelMod as any).BpmnPropertiesPanelModule,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (propsPanelMod as any).BpmnPropertiesProviderModule,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (propsPanelMod as any).CamundaPlatformPropertiesProviderModule,
+            // 用我们的 translate 替换默认（把 palette / properties panel 文案翻成中文）
+            ChineseTranslateModule,
+            minimap.default,
+          ],
+          moddleExtensions: { flowable: flowableJson },
+        })
+      } catch (e) {
+        const err = e as Error
+        console.error('[useModelDesigner] Modeler 构造失败', err)
+        Message.error(`设计器初始化失败：${err.message ?? '未知错误'}`)
+        return
+      }
 
       // 4. 装 XML
       // 后端返回的 EMPTY_BPMN_XML 没有 DI（Diagram Interchange）信息，
@@ -158,31 +170,60 @@ export function useModelDesigner() {
       // 检测：含 <bpmndi:BPMNDiagram 视为有 DI；否则用前端模板（带 StartEvent 坐标）
       const hasDiagram = xml.includes('bpmndi:BPMNDiagram')
       const seed = hasDiagram ? xml : EMPTY_PROCESS_XML
-      await inst.importXML(seed)
-      // 5. 视图自适应
-      inst.get<{ zoom: (s: string) => void }>('canvas').zoom('fit-viewport')
+      try {
+        await inst.importXML(seed)
+      } catch (e) {
+        const err = e as Error
+        console.error('[useModelDesigner] importXML 失败', err)
+        Message.error(`BPMN XML 解析失败：${err.message ?? '未知错误'}`)
+        // XML 解析失败时仍然保留 modeler 实例（用户可手动编辑空白画布）
+        // 但记一笔警告
+      }
 
-      // 6. 装 lint 监听：bpmn-js-bpmnlint 把校验结果写入 elementRegistry / overlays；
-      //    通过 lint 事件拿到 warnings
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const lintInstance = inst.get<any>('lint')
-      if (lintInstance && typeof lintInstance.on === 'function') {
-        lintInstance.on('linting.completed', (event: { warnings: LintWarning[] } | undefined) => {
-          lintWarnings.value = event?.warnings ?? []
-        })
-      } else if (typeof (inst as unknown as { on: (e: string, cb: (e: unknown) => void) => void }).on === 'function') {
-        // 兜底：从 modeler 直接监听 linting.* 事件
-        inst.on('linting.completed', (event: { warnings: LintWarning[] } | undefined) => {
-          lintWarnings.value = event?.warnings ?? []
-        })
+      // 5. 视图自适应
+      try {
+        inst.get<{ zoom: (s: string) => void }>('canvas').zoom('fit-viewport')
+      } catch {
+        // zoom 失败不影响使用
+      }
+
+      // 6. 装 lint 监听（可选）
+      //    bpmn-js-bpmnlint 提供 'lint' service —— 如果 additionalModules 没注册它，
+      //    inst.get('lint') 会抛"No provider for lint"错误。我们用 false 第二参数让
+      //    didi 返回 null 而不是抛错。
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const lintInstance = (inst as unknown as { get: (n: string, strict?: boolean) => unknown }).get('lint', false) as
+          | { on: (e: string, cb: (e: { warnings?: LintWarning[] } | undefined) => void) => void }
+          | null
+        if (lintInstance && typeof lintInstance.on === 'function') {
+          lintInstance.on('linting.completed', (event) => {
+            lintWarnings.value = event?.warnings ?? []
+          })
+        } else if (typeof (inst as unknown as { on: (e: string, cb: (e: unknown) => void) => void }).on === 'function') {
+          // 兜底：从 modeler 直接监听 linting.* 事件
+          inst.on('linting.completed', (event: { warnings: LintWarning[] } | undefined) => {
+            lintWarnings.value = event?.warnings ?? []
+          })
+        }
+      } catch {
+        // lint 模块没注册 —— 完全可选，吞掉
       }
 
       // 关键：markRaw 阻止 Vue 把 inst 包成响应式 Proxy，避免破坏 bpmn-js 内部 this.* 链
+      // 即便 importXML 失败，也保留 modeler 实例（用户至少能编辑空白画布），
+      // 这样保存按钮不会再误报"设计器尚未初始化"。
       modeler.value = markRaw(inst)
       currentXml.value = seed
+      loading.value = false  // 提前置 false，让 UI 解禁；之前 finally 设的顺序也对，但提前更明确
 
       // 调试用：把 modeler 挂到 window，方便用 Selection.select() 直接触发选中
       ;(window as unknown as { __bpmnModeler: unknown }).__bpmnModeler = inst
+      return
+    } catch (e) {
+      const err = e as Error
+      console.error('[useModelDesigner] initModeler 抛出未捕获异常', err, '\nStack:', err.stack)
+      Message.error(`设计器初始化失败：${err.message ?? '未知错误'}`)
     } finally {
       loading.value = false
     }
@@ -212,7 +253,26 @@ export function useModelDesigner() {
         query: { id: res.data.id, mode: 'edit' },
       })
       Message.success('已创建，开始编辑流程')
+      return
     }
+
+    // edit 模式：PUT 更新元数据。
+    // 之前漏了这条分支，导致编辑现有模型时按钮"无反应"。
+    if (!modelId.value) {
+      Message.warning('缺少模型 ID，无法保存')
+      return
+    }
+    const res = await updateModel(modelId.value, {
+      name: metaForm.name,
+      businessType: metaForm.businessType,
+      description: metaForm.description,
+    })
+    if (res.code !== RESPONSE_CODE.SUCCESS) {
+      Message.error(res.message || '保存失败')
+      return
+    }
+    currentModel.value = res.data ?? currentModel.value
+    Message.success('元数据已保存')
   }
 
   async function saveBpmn() {
@@ -220,9 +280,14 @@ export function useModelDesigner() {
       Message.warning('请先保存元数据')
       return
     }
+    if (loading.value) {
+      // 初始化未完成 —— 按钮理论上应已禁用，但兜底再防一次
+      Message.warning('设计器正在初始化，请稍候')
+      return
+    }
     const inst = modeler.value
     if (!inst) {
-      Message.warning('设计器尚未初始化')
+      Message.error('设计器初始化失败，请刷新页面重试')
       return
     }
     saving.value = true

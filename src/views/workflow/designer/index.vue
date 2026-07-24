@@ -70,7 +70,16 @@ async function onRolledBack(): Promise<void> {
 
 onMounted(async () => {
   if (canvasRef.value && propertiesRef.value) {
-    await initModeler(canvasRef.value, propertiesRef.value)
+    try {
+      await initModeler(canvasRef.value, propertiesRef.value)
+    } catch (e) {
+      // 之前这里没 catch，导致 Vue 抛"Unhandled error during execution of mounted hook"
+      // 实际上 initModeler 内部已经 try/catch 过主要步骤了；这里兜底防止后续
+      // 任何新增代码意外抛出，让按钮永远卡在 disabled 状态。
+      const err = e as Error
+      console.error('[designer] initModeler 抛出未捕获异常', err)
+      Message.error(`设计器初始化失败：${err.message ?? '未知错误'}`)
+    }
   }
 })
 </script>
@@ -117,16 +126,18 @@ onMounted(async () => {
         </button>
         <button
           class="btn btn-primary"
-          :disabled="loading || saving"
+          :disabled="loading || saving || !modeler"
           v-has-permi="WORKFLOW_MODEL_PERMS.WRITE"
+          :title="!modeler && !loading ? '设计器尚未初始化完成' : ''"
           @click="saveBpmn"
         >
           {{ saving ? '保存中…' : '保存 BPMN' }}
         </button>
         <button
           class="btn btn-primary"
-          :disabled="loading || deploying"
+          :disabled="loading || deploying || !modeler"
           v-has-permi="WORKFLOW_MODEL_PERMS.DEPLOY"
+          :title="!modeler && !loading ? '设计器尚未初始化完成' : ''"
           @click="deploy"
         >
           {{ deploying ? '部署中…' : '部署' }}
