@@ -220,9 +220,6 @@ onMounted(async () => {
           <!-- CSS chevron：朝右表示"收起"（箭头指向画布），朝左表示"展开" -->
           <span class="chevron" :class="{ collapsed: propertiesCollapsed }" />
         </button>
-        <span v-if="propertiesCollapsed" class="collapsed-hint" aria-hidden="true">
-          属<br />性
-        </span>
       </div>
     </div>
 
@@ -476,21 +473,9 @@ onMounted(async () => {
   }
 
   /*
-   * 折叠态下显示的竖排"属性"两字 —— 给纯几何形状的窄边加点信息密度。
-   * 字号小、字距宽、字色淡，不抢画布焦点。
+   * 折叠态下不显示"属性"两字 —— 仅靠圆形 toggle 按钮 + hover tooltip（"展开属性面板"）
+   * 提示用户回到这里。窄边只留 36px 是为了 toggle 按钮本身能放下。
    */
-  .collapsed-hint {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    writing-mode: vertical-rl;
-    font-size: 11px;
-    color: var(--text-tertiary);
-    letter-spacing: 4px;
-    pointer-events: none;
-    user-select: none;
-  }
 }
 
 .loading-mask {
