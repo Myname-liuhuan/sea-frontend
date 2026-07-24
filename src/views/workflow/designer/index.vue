@@ -23,6 +23,12 @@ import {
   BPMN_PROPERTIES_PANEL_WIDTH,
   WORKFLOW_MODEL_PERMS,
 } from '@/constants/workflow'
+
+/**
+ * 属性面板收起态宽度（px）。展开态用常量 BPMN_PROPERTIES_PANEL_WIDTH（288）。
+ * 36px 刚好容纳一个折叠按钮 + 极简文字提示。
+ */
+const PROPERTIES_COLLAPSED_WIDTH = 36
 import LinterPanel from './components/LinterPanel.vue'
 import ZoomControls from './components/ZoomControls.vue'
 import MinimapPanel from './components/MinimapPanel.vue'
@@ -31,6 +37,19 @@ import DiffView from './components/DiffView.vue'
 
 const canvasRef = ref<HTMLDivElement | null>(null)
 const propertiesRef = ref<HTMLDivElement | null>(null)
+
+/**
+ * 属性面板折叠状态。
+ *
+ * - 默认 false（展开）：看元素属性用。
+ * - 用户点折叠按钮后变 true：画布占满横向。
+ * - 仅改容器 width / overflow，bpmn-js-properties-panel 的内部 DOM 不卸载，
+ *   避免重新渲染带来的视觉抖动。
+ */
+const propertiesCollapsed = ref(false)
+function toggleProperties(): void {
+  propertiesCollapsed.value = !propertiesCollapsed.value
+}
 
 const {
   metaForm,
@@ -177,12 +196,34 @@ onMounted(async () => {
       <!--
         bpmn-js-properties-panel 通过 propertiesPanel.parent 挂到这个 div，
         渲染完整的 BPMN + Camunda/Flowable 属性面板（社区包实现，覆盖所有元素类型）。
+
+        折叠按钮：absolute 贴在 panel 左上边缘 —— 不管折叠态还是展开态都常驻可见，
+        让用户始终能找到"展开/收起"入口。折叠态下属性面板的内容隐藏（opacity:0 + pointer-events:none），
+        panel DOM 仍保留以便 bpmn-js-properties-panel 不重新挂载。
       -->
       <div
         ref="propertiesRef"
         class="designer-properties"
-        :style="{ width: BPMN_PROPERTIES_PANEL_WIDTH + 'px' }"
-      />
+        :class="{ collapsed: propertiesCollapsed }"
+        :style="{
+          width: propertiesCollapsed
+            ? PROPERTIES_COLLAPSED_WIDTH + 'px'
+            : BPMN_PROPERTIES_PANEL_WIDTH + 'px',
+        }"
+      >
+        <button
+          class="properties-toggle"
+          :title="propertiesCollapsed ? '展开属性面板' : '收起属性面板'"
+          :aria-label="propertiesCollapsed ? '展开属性面板' : '收起属性面板'"
+          @click="toggleProperties"
+        >
+          <!-- CSS chevron：朝右表示"收起"（箭头指向画布），朝左表示"展开" -->
+          <span class="chevron" :class="{ collapsed: propertiesCollapsed }" />
+        </button>
+        <span v-if="propertiesCollapsed" class="collapsed-hint" aria-hidden="true">
+          属<br />性
+        </span>
+      </div>
     </div>
 
     <!-- Diff 弹窗 -->
@@ -360,10 +401,96 @@ onMounted(async () => {
 }
 
 .designer-properties {
+  position: relative;
   border-left: 1px solid var(--border-light);
   background: var(--bg-secondary);
   flex-shrink: 0;
   overflow: hidden;
+  transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /*
+   * 折叠态：把 bpmn-js-properties-panel 渲染出来的内容隐掉。
+   * 用 opacity 而不是 display:none，避免卸载 DOM 引发重新初始化开销；
+   * pointer-events:none 让点击穿透到折叠态下的 hint 文字。
+   */
+  &.collapsed {
+    :deep(.bio-properties-panel-container) {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease;
+    }
+  }
+
+  /*
+   * 折叠按钮：吸在 panel 左上边缘外侧（-8px 偏移），形成"把手"感。
+   * 不管展开 / 折叠都常驻可见，永远给用户一个出入口。
+   */
+  .properties-toggle {
+    position: absolute;
+    top: 12px;
+    left: -12px;
+    z-index: 5;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1px solid var(--border-light);
+    background: var(--bg-secondary);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--transition-fast),
+                box-shadow var(--transition-fast),
+                transform var(--transition-fast);
+
+    &:hover {
+      background: var(--bg-tertiary);
+      box-shadow: var(--shadow-md);
+      transform: scale(1.05);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 1px;
+    }
+  }
+
+  .chevron {
+    width: 0;
+    height: 0;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-left: 5px solid var(--text-secondary);
+    transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+                border-left-color var(--transition-fast);
+
+    &.collapsed {
+      /* 折叠态：箭头反向，暗示"点击展开" */
+      transform: rotate(180deg);
+    }
+  }
+
+  .properties-toggle:hover .chevron {
+    border-left-color: var(--color-primary);
+  }
+
+  /*
+   * 折叠态下显示的竖排"属性"两字 —— 给纯几何形状的窄边加点信息密度。
+   * 字号小、字距宽、字色淡，不抢画布焦点。
+   */
+  .collapsed-hint {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    writing-mode: vertical-rl;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    letter-spacing: 4px;
+    pointer-events: none;
+    user-select: none;
+  }
 }
 
 .loading-mask {

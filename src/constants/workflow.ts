@@ -36,8 +36,14 @@ export const WORKFLOW_MODEL_PERMS = {
   DELETE: 'workflow:model:delete',
 } as const
 
-/** 设计器右侧属性面板宽度（px） */
-export const BPMN_PROPERTIES_PANEL_WIDTH = 320
+/**
+ * 设计器右侧属性面板宽度（px）。
+ *
+ * 之前是 320px，但实测在大屏上占 ~28% 显得过宽；调到 288 既能容下 bpmn-js-properties-panel
+ * 的常用 entry（assignee / formKey / 监听器 列表），又把更多横向空间让给画布。
+ * 仍嫌宽可一键折叠成 36px 窄边（见 designer/index.vue 的 propertiesCollapsed）。
+ */
+export const BPMN_PROPERTIES_PANEL_WIDTH = 288
 
 /** 设计器画布最小高度（px） */
 export const BPMN_CANVAS_MIN_HEIGHT = 600

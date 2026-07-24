@@ -111,6 +111,19 @@ defineExpose({ loadList })
       >
         刷新
       </button>
+      <!--
+        折叠指示：CSS-drawn chevron（border 旋转），不用图标库。
+        chevron 旋转配合 max-height 过渡给用户"这里能收起来"的视觉信号。
+      -->
+      <span
+        class="chevron"
+        :class="{ collapsed: !expanded }"
+        :aria-label="expanded ? '收起版本历史' : '展开版本历史'"
+        role="button"
+        tabindex="0"
+        @click.stop="expanded = !expanded"
+        @keydown.enter.stop="expanded = !expanded"
+      />
     </div>
     <ul v-if="expanded" class="version-list">
       <li v-if="loading" class="empty">加载中…</li>
@@ -157,9 +170,16 @@ defineExpose({ loadList })
   max-height: 260px;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  transition: max-height 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 
   &.collapsed {
     max-height: 36px;
+
+    /* 折叠态：去掉 header 下边框，让面板变成一条干净的"控制条" */
+    .panel-header {
+      border-bottom-color: transparent;
+    }
   }
 }
 
@@ -172,6 +192,11 @@ defineExpose({ loadList })
   border-bottom: 1px solid var(--border-light);
   cursor: pointer;
   user-select: none;
+  transition: background var(--transition-fast);
+
+  &:hover {
+    background: var(--bg-primary);
+  }
 
   .title {
     font-size: 13px;
@@ -201,6 +226,56 @@ defineExpose({ loadList })
       opacity: 0.5;
       cursor: not-allowed;
     }
+  }
+
+  /*
+   * 折叠指示 chevron：用 border 画的 8x8 等腰三角形，比 SVG 更轻量。
+   *   ▾ 状态：transform: rotate(0)  —— 展开中，指向下
+   *   ▴ 状态：transform: rotate(180deg) —— 折叠后，指向下后翻向上
+   */
+  .chevron {
+    margin-left: auto;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1),
+                background var(--transition-fast);
+
+    &::before {
+      content: '';
+      width: 0;
+      height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 5px solid var(--text-tertiary);
+      transition: border-top-color var(--transition-fast);
+    }
+
+    &:hover {
+      background: var(--bg-secondary);
+
+      &::before {
+        border-top-color: var(--text-primary);
+      }
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 1px;
+    }
+
+    &.collapsed {
+      transform: rotate(180deg);
+    }
+  }
+
+  /* refresh-btn 自身已经有 margin-left: auto，chevron 在它之后显示 */
+  .refresh-btn + .chevron {
+    margin-left: 4px;
   }
 }
 

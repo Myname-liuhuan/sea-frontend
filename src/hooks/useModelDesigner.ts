@@ -192,7 +192,6 @@ export function useModelDesigner() {
       //    inst.get('lint') 会抛"No provider for lint"错误。我们用 false 第二参数让
       //    didi 返回 null 而不是抛错。
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const lintInstance = (inst as unknown as { get: (n: string, strict?: boolean) => unknown }).get('lint', false) as
           | { on: (e: string, cb: (e: { warnings?: LintWarning[] } | undefined) => void) => void }
           | null
