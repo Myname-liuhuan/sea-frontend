@@ -126,6 +126,17 @@ router.beforeEach(async (to, _from, next) => {
     return
   }
 
+  // F5 刷新场景：路由守卫触发时动态路由还没注入，to.name 是 undefined。
+  // 注入完成后把当前导航重新派发一次，让路由表按新增的动态路由重新匹配 name。
+  // 用 path 解析判断是否真的命中了已注册的路由，避免误把不存在的路径也放行。
+  if (!to.name) {
+    const resolved = router.resolve(to.path)
+    if (resolved.matched.length > 0) {
+      next({ ...to, replace: true })
+      return
+    }
+  }
+
   // 检查目标路由是否已注册
   if (to.name && router.hasRoute(to.name)) {
     next()
