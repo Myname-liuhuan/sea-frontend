@@ -4,7 +4,7 @@ import type { InAppMessage } from '@/types/workflow'
 
 /** 站内信未读数 */
 export function getUnreadCount(): Promise<ApiResponse<number>> {
-  return request.post('/notification/unread-count')
+  return request.get('/notification/unread-count')
 }
 
 /** 站内信列表 */
