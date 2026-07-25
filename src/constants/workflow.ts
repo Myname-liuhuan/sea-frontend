@@ -11,8 +11,11 @@ export const INBOX_BADGE_MAX = 99
 /** 收件箱每页条数 */
 export const INBOX_PAGE_SIZE = 10
 
-/** 铃铛未读数轮询周期（60s） */
+/** 铃铛未读数兜底轮询周期（仅 WS 断线期间启用） */
 export const INBOX_POLL_INTERVAL_MS = 60_000
+
+/** WebSocket 断线后重连延迟 */
+export const WS_RECONNECT_DELAY_MS = 5_000
 
 /** 申请幂等键：apply-{userId}-{ts} 命名空间 */
 export const APPLY_IDEMPOTENCY_PREFIX = 'apply'

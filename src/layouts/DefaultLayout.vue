@@ -1,13 +1,9 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
 import { useLayout } from '@/hooks/useLayout'
 import { useNotificationBell } from '@/hooks/useNotificationBell'
-import { useUserStore } from '@/store'
 import { resolveIcon } from '@/utils/icon'
 import { Message, Trigger as ATrigger } from '@arco-design/web-vue'
 import { IconLock, IconExport } from '@arco-design/web-vue/es/icon'
-
-const userStore = useUserStore()
 
 const {
   collapsed,
@@ -29,56 +25,6 @@ const {
   onRead,
   onReadAll,
 } = useNotificationBell()
-
-/** WebSocket 站内信推送订阅（real-time 增量更新 unread）。
- *
- * <p>路径必须经网关：与后端 {@code sea-notification} 的
- * {@code @RequestMapping("/api/notification")} + {@code WebSocketConfig}
- * 注册的 {@code /api/notification/ws/notify} 对应。
- *
- * <p>dev 下 Vite proxy 会把 {@code /api} 重写到空，所以必须用
- * {@code VITE_WS_BASE_URL} 直连网关 ws 端口（见 .env.development）。
- */
-const WS_RECONNECT_DELAY_MS = 5_000
-let socket: WebSocket | null = null
-function connectWs() {
-  if (socket) return
-  const protocol = location.protocol === 'https:' ? 'wss' : 'ws'
-  const baseUrl =
-    (import.meta.env.VITE_WS_BASE_URL as string | undefined) ||
-    `${protocol}://${location.host}`
-  const token = userStore.token
-  if (!token) return
-  // 用 token 而不是 userId：服务端从 JWT 解析 userId，伪造 query 没意义
-  const ws = new WebSocket(`${baseUrl}/api/notification/ws/notify?token=${encodeURIComponent(token)}`)
-  ws.onmessage = () => {
-    // 收到任意推送即递增未读
-    unread.value = unread.value + 1
-  }
-  ws.onclose = () => {
-    socket = null
-    setTimeout(connectWs, WS_RECONNECT_DELAY_MS)
-  }
-  ws.onerror = () => {
-    try {
-      ws.close()
-    } catch {
-      // swallow
-    }
-  }
-  socket = ws
-}
-
-onMounted(() => {
-  connectWs()
-})
-
-onUnmounted(() => {
-  if (socket) {
-    socket.close()
-    socket = null
-  }
-})
 
 function handleChangePassword() {
   // TODO: 修改密码功能待实现
