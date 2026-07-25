@@ -419,6 +419,65 @@ onMounted(async () => {
   }
 
   /*
+   * 紧凑模式：把 bpmn-js-properties-panel 的内置间距压下来，让 240px 宽度
+   * 能容下全部 entry。bpmn-io 公开的 .bio-properties-panel-* class 是稳定 API，
+   * 跨版本可以放心 override padding / height / font-size 这些纯视觉属性。
+   */
+  :deep(.bio-properties-panel-container) {
+    font-size: 12px;
+  }
+
+  :deep(.bio-properties-panel-header) {
+    padding: 8px 12px;
+
+    .bio-properties-panel-icon {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  :deep(.bio-properties-panel-group) {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-light);
+
+    .bio-properties-panel-group-header {
+      padding: 4px 0;
+      margin-bottom: 4px;
+    }
+
+    .bio-properties-panel-group-header-title {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+  }
+
+  :deep(.bio-properties-panel-entry) {
+    margin-bottom: 6px;
+
+    .bio-properties-panel-label {
+      margin-bottom: 3px;
+      font-size: 11px;
+    }
+  }
+
+  :deep(.bio-properties-panel-input) {
+    min-height: 26px;
+    font-size: 12px;
+  }
+
+  :deep(.bio-properties-panel-textfield) input,
+  :deep(.bio-properties-panel-select) select {
+    height: 26px;
+    padding: 0 8px;
+  }
+
+  :deep(.bio-properties-panel-list-entry) {
+    margin: 4px 0;
+    padding: 6px;
+  }
+
+  /*
    * 折叠按钮：吸在 panel 左上边缘外侧（-8px 偏移），形成"把手"感。
    * 不管展开 / 折叠都常驻可见，永远给用户一个出入口。
    */

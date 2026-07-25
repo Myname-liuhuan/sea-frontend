@@ -39,11 +39,15 @@ export const WORKFLOW_MODEL_PERMS = {
 /**
  * 设计器右侧属性面板宽度（px）。
  *
- * 之前是 320px，但实测在大屏上占 ~28% 显得过宽；调到 288 既能容下 bpmn-js-properties-panel
- * 的常用 entry（assignee / formKey / 监听器 列表），又把更多横向空间让给画布。
- * 仍嫌宽可一键折叠成 36px 窄边（见 designer/index.vue 的 propertiesCollapsed）。
+ * 调优记录：
+ * - 320 → 288 → 240（当前）
+ * - 24% 视口宽度（@1200）已经盖过画布的 33%，画图体验差
+ * - 240px + 更紧凑的内边距（见 designer/index.vue 的 bio-properties-panel
+ *   override）能容下 bpmn-js-properties-panel 全部 entry 不换行
+ * - 视口 ≥ 1600 时占比降到 15% 以下，画布占满
+ * - 仍嫌宽可一键折叠成 36px 窄边（propertiesCollapsed）
  */
-export const BPMN_PROPERTIES_PANEL_WIDTH = 288
+export const BPMN_PROPERTIES_PANEL_WIDTH = 240
 
 /** 设计器画布最小高度（px） */
 export const BPMN_CANVAS_MIN_HEIGHT = 600
