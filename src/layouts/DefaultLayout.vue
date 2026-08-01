@@ -8,6 +8,8 @@ import { IconLock, IconExport } from '@arco-design/web-vue/es/icon'
 const {
   collapsed,
   menuItems,
+  isGroupExpanded,
+  toggleGroup,
   selectedKey,
   userNickname,
   handleMenuClick,
@@ -77,7 +79,13 @@ function handleChangePassword() {
           </div>
 
           <div v-else class="nav-group" :class="{ collapsed }">
-            <div class="nav-group-title" v-if="!collapsed">
+            <div
+              class="nav-group-title"
+              :class="{ clickable: !collapsed, active: isGroupExpanded(menu.key) }"
+              role="button"
+              :aria-expanded="isGroupExpanded(menu.key)"
+              @click="collapsed ? null : toggleGroup(menu.key)"
+            >
               <span class="nav-icon">
                 <component :is="resolveIcon(menu.icon)" v-if="resolveIcon(menu.icon)" />
                 <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -85,22 +93,35 @@ function handleChangePassword() {
                   <path d="M12 2v4m0 12v4M2 12h4m12 0h4"/>
                 </svg>
               </span>
-              <span class="nav-text">{{ menu.title }}</span>
-            </div>
-            <div
-              v-for="child in menu.children"
-              :key="child.key"
-              class="nav-item sub"
-              :class="{ active: selectedKey === child.key }"
-              @click="handleMenuClick(child.key)"
-            >
-              <span class="nav-icon">
-                <component :is="resolveIcon(child.icon)" v-if="resolveIcon(child.icon)" />
-                <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="3"/>
+              <span v-if="!collapsed" class="nav-text">{{ menu.title }}</span>
+              <span v-if="!collapsed" class="nav-chevron" :class="{ rotated: isGroupExpanded(menu.key) }">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"/>
                 </svg>
               </span>
-              <span v-if="!collapsed" class="nav-text">{{ child.title }}</span>
+            </div>
+            <div
+              v-show="!collapsed"
+              class="nav-group-items"
+              :class="{ expanded: isGroupExpanded(menu.key) }"
+            >
+              <div class="nav-group-items-inner">
+                <div
+                  v-for="child in menu.children"
+                  :key="child.key"
+                  class="nav-item sub"
+                  :class="{ active: selectedKey === child.key }"
+                  @click="handleMenuClick(child.key)"
+                >
+                  <span class="nav-icon">
+                    <component :is="resolveIcon(child.icon)" v-if="resolveIcon(child.icon)" />
+                    <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  </span>
+                  <span class="nav-text">{{ child.title }}</span>
+                </div>
+              </div>
             </div>
           </div>
         </template>
@@ -302,6 +323,40 @@ function handleChangePassword() {
   color: #999;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  border-radius: 6px;
+  transition: color 0.15s ease, background 0.15s ease;
+
+  &.clickable { cursor: pointer; }
+  &.clickable:hover { color: #1a1a1a; background: #f5f5f5; }
+  &.active { color: #1a1a1a; }
+}
+
+.nav-chevron {
+  margin-left: auto;
+  width: 12px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+  transition: transform 0.2s ease;
+  transform: rotate(-90deg);
+
+  &.rotated { transform: rotate(0deg); }
+  svg { width: 100%; height: 100%; }
+}
+
+.nav-group-items {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.2s ease;
+
+  &.expanded { grid-template-rows: 1fr; }
+}
+
+.nav-group-items-inner {
+  overflow: hidden;
+  min-height: 0;
 }
 
 .main {
