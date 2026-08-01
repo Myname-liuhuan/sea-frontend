@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useMenuPage } from '@/hooks/useMenuPage'
+import { useMenuPage } from '@/hooks/system/useMenuPage'
 import { MENU_TYPE } from '@/constants'
 import IconPicker from '@/components/IconPicker.vue'
 

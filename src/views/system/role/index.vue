@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useRolePage } from '@/hooks/useRolePage'
+import { useRolePage } from '@/hooks/system/useRolePage'
 import { ENTITY_STATUS, PAGE_SIZE_OPTIONS } from '@/constants'
 import DataTable, { type DataTableColumn } from '@/components/DataTable.vue'
 

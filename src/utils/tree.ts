@@ -1,13 +1,9 @@
+import type { TreeNodeDisplay } from '@/types/system'
+
 export interface TreeNode {
   id: number | string
   icon?: string
   children?: TreeNode[]
-}
-
-export interface TreeNodeDisplay {
-  id: string
-  [key: string]: unknown
-  children?: TreeNodeDisplay[]
 }
 
 /**

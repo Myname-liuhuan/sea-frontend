@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed, type ComputedRef } from 'vue'
-import type { SysMenu } from '@/types'
+import type { SysMenu } from '@/types/system'
 
 /**
  * 从菜单树递归收集所有 perms 权限字符串

@@ -4,7 +4,7 @@ import { useUserStore, useMenuStore } from '@/store'
 import { Modal } from '@arco-design/web-vue'
 import { MENU_TYPE } from '@/constants'
 import { resetDynamicRoutes } from '@/router'
-import type { SysMenu } from '@/types'
+import type { SysMenu } from '@/types/system'
 
 interface MenuItem {
   key: string

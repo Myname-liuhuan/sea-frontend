@@ -1,5 +1,6 @@
 import request from '@/utils/request'
-import type { ApiResponse, SysMenu, SysMenuDTO } from '@/types'
+import type { ApiResponse } from '@/types'
+import type { SysMenu, SysMenuDTO } from '@/types/system'
 
 /**
  * 获取当前用户的菜单树

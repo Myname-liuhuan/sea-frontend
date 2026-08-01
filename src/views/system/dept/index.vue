@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useDeptPage, type FlatDeptItem } from '@/hooks/useDeptPage'
+import { useDeptPage, type FlatDeptItem } from '@/hooks/system/useDeptPage'
 import { ENTITY_STATUS } from '@/constants'
 import DataTable, { type DataTableColumn } from '@/components/DataTable.vue'
 

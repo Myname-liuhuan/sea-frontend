@@ -1,29 +1,6 @@
 import request from '@/utils/request'
 import type { ApiResponse } from '@/types'
-
-export interface SysDept {
-  id: number
-  parentId: number
-  name: string
-  orderNum: number
-  leader?: string
-  mobile?: string
-  email?: string
-  status: string
-  createTime?: string
-  children?: SysDept[]
-}
-
-export interface SysDeptDTO {
-  id?: number
-  parentId: number
-  name: string
-  orderNum?: number
-  leader?: string
-  mobile?: string
-  email?: string
-  status?: string
-}
+import type { SysDept, SysDeptDTO } from '@/types/system'
 
 /**
  * 获取部门树

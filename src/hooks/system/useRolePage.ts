@@ -9,16 +9,16 @@ import {
   assignMenus,
   getRoleMenuIds,
   getRoleUserIds,
-} from '@/api/role'
-import { getAllMenuTree } from '@/api/menu'
-import { getUserPage } from '@/api/user'
+} from '@/api/system/role'
+import { getAllMenuTree } from '@/api/system/menu'
+import { getUserPage } from '@/api/system/user'
 import type {
   SysRole,
   SysRoleQuery,
   SysRoleDTO,
   SysUser,
   TreeNodeDisplay,
-} from '@/types'
+} from '@/types/system'
 import { Message, Modal } from '@arco-design/web-vue'
 import { toTreeNodeDisplay } from '@/utils/tree'
 import { formatEntityStatus } from '@/utils/format'

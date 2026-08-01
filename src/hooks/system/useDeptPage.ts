@@ -1,7 +1,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { Message, Modal } from '@arco-design/web-vue'
-import { getDeptTree, addDept, updateDept, deleteDept, getDeptTreeSelect } from '@/api/dept'
-import type { SysDept, SysDeptDTO } from '@/api/dept'
+import { getDeptTree, addDept, updateDept, deleteDept, getDeptTreeSelect } from '@/api/system/dept'
+import type { SysDept, SysDeptDTO } from '@/types/system'
 import { RESPONSE_CODE, ENTITY_STATUS } from '@/constants'
 import { formatEntityStatus } from '@/utils/format'
 

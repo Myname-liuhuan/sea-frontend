@@ -1,5 +1,6 @@
 import request from '@/utils/request'
-import type { ApiResponse, PageResult, SysUser, SysUserQuery, SysUserDTO, LoginUser } from '@/types'
+import type { ApiResponse, PageResult, LoginUser } from '@/types'
+import type { SysUser, SysUserQuery, SysUserDTO } from '@/types/system'
 
 /**
  * 获取当前登录用户信息

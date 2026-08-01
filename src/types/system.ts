@@ -1,0 +1,160 @@
+import type { PageQuery } from './index'
+
+// ========== 用户类型 ==========
+
+/** 用户视图对象 (对应后端 SysUserVO) */
+export interface SysUser {
+  id: string | number
+  username: string
+  email?: string
+  mobile?: string
+  avatarUrl?: string
+  profile?: string
+  isBanned?: string
+  bannedUntil?: string
+  createTime?: string
+  updateTime?: string
+  createBy?: string | number
+  updateBy?: string | number
+  delFlag?: number
+}
+
+/** 用户查询参数 (对应后端 SysUserQueryParam) */
+export interface SysUserQuery extends PageQuery {
+  username?: string
+  email?: string
+  mobile?: string
+  avatarUrl?: string
+  profile?: string
+  createTimeStart?: string
+  createTimeEnd?: string
+}
+
+/** 用户表单数据 (对应后端 SysUserDTO) */
+export interface SysUserDTO {
+  id?: string | number
+  username: string
+  email: string
+  mobile?: string
+  password?: string
+  avatarUrl?: string
+  profile?: string
+}
+
+// ========== 角色类型 ==========
+
+/** 角色实体 */
+export interface SysRole {
+  id: string | number
+  roleName: string
+  roleCode: string
+  roleDesc?: string
+  dataScope?: string
+  status: string
+  createTime?: string
+  updateTime?: string
+  createBy?: string | number
+  updateBy?: string | number
+  delFlag?: number
+}
+
+/** 角色查询参数 */
+export interface SysRoleQuery extends PageQuery {
+  roleName?: string
+  roleCode?: string
+  status?: string
+  createTimeStart?: string
+  createTimeEnd?: string
+}
+
+/** 角色表单数据 */
+export interface SysRoleDTO {
+  id?: string | number
+  roleName: string
+  roleCode: string
+  roleDesc?: string
+  dataScope?: string
+  status?: string
+}
+
+// ========== 菜单类型 ==========
+
+/** 菜单类型: 1=目录, 2=菜单, 3=按钮 */
+export type MenuType = string
+
+/** Tree node display format for Arco Tree component */
+export interface TreeNodeDisplay {
+  id: string
+  [key: string]: unknown
+  children?: TreeNodeDisplay[]
+}
+
+/** 菜单实体 */
+export interface SysMenu {
+  id: string | number
+  menuId: string | number
+  parentId: string | number
+  menuName: string
+  menuType: string
+  path: string
+  component?: string
+  perms?: string
+  icon?: string
+  visible: string
+  orderNum: number
+  createTime?: string
+  updateTime?: string
+  createBy?: string | number
+  updateBy?: string | number
+  delFlag?: number
+  children?: SysMenu[]
+}
+
+/** 菜单查询参数 */
+export interface SysMenuQuery extends PageQuery {
+  menuName?: string
+  visible?: string
+  status?: string
+}
+
+/** 菜单表单数据 */
+export interface SysMenuDTO {
+  id?: string | number
+  parentId: string | number
+  menuName: string
+  menuType: string
+  path: string
+  component?: string
+  perms?: string
+  icon?: string
+  visible?: string
+  orderNum: number
+}
+
+// ========== 部门类型 ==========
+
+/** 部门实体 (对应后端 SysDeptVO) */
+export interface SysDept {
+  id: number
+  parentId: number
+  name: string
+  orderNum?: number
+  leader?: string
+  mobile?: string
+  email?: string
+  status: string
+  createTime?: string
+  children?: SysDept[]
+}
+
+/** 部门表单数据 (对应后端 SysDeptDTO) */
+export interface SysDeptDTO {
+  id?: number
+  parentId: number
+  name: string
+  orderNum?: number
+  leader?: string
+  mobile?: string
+  email?: string
+  status?: string
+}

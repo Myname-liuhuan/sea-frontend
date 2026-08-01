@@ -1,5 +1,5 @@
 import type { RouteRecordRaw } from 'vue-router'
-import type { SysMenu } from '@/types'
+import type { SysMenu } from '@/types/system'
 import { MENU_TYPE } from '@/constants'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 

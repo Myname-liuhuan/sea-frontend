@@ -3,7 +3,7 @@ import type { RouteRecordRaw } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { useUserStore } from '@/store/user'
 import { useMenuStore } from '@/store/menu'
-import { getMyMenuTree } from '@/api/menu'
+import { getMyMenuTree } from '@/api/system/menu'
 import { RESPONSE_CODE } from '@/constants'
 import { buildDynamicRoutes } from './guards'
 

@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { useUserPage } from '@/hooks/useUserPage'
+import { useUserPage } from '@/hooks/system/useUserPage'
 import { PAGE_SIZE_OPTIONS, USER_BAN_STATUS } from '@/constants'
 import DataTable, { type DataTableColumn } from '@/components/DataTable.vue'
 import ApplyResetPasswordModal from '@/views/workflow/ApplyResetPasswordModal.vue'
