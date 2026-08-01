@@ -31,11 +31,10 @@ const {
         <p>配置系统菜单和权限</p>
       </div>
       <button class="btn btn-primary" v-has-permi="'sys:menu:add'" @click="openAddModal(0)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="12" y1="5" x2="12" y2="19"/>
           <line x1="5" y1="12" x2="19" y2="12"/>
-        </svg>
-        新增
+        </svg>新增
       </button>
     </div>
 

@@ -73,11 +73,10 @@ function onApplySubmitted(taskNo: string) {
         </div>
         <div class="form-actions">
           <button class="btn btn-primary" @click="handleSearch">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="8"/>
               <path d="M21 21l-4.35-4.35"/>
-            </svg>
-            搜索
+            </svg>搜索
           </button>
           <button class="btn btn-default" @click="handleReset">重置</button>
         </div>
@@ -91,11 +90,10 @@ function onApplySubmitted(taskNo: string) {
         <span class="count">{{ pagination.total || 0 }} 条记录</span>
       </div>
       <button class="btn btn-primary" v-has-permi="'sys:user:add'" @click="openAddModal">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="12" y1="5" x2="12" y2="19"/>
           <line x1="5" y1="12" x2="19" y2="12"/>
-        </svg>
-        新增
+        </svg>新增
       </button>
     </div>
 

@@ -440,6 +440,12 @@ a:hover {
   gap: 6px;
   border: none;
   transition: all var(--transition-base);
+  flex-wrap: nowrap;
+  white-space: nowrap;
+
+  // 按钮内的 svg 必须显式 width/height；这里给一个 flex-shrink:0 兜底，
+  // 防止 SVG 被压缩到 0、文本被断字成竖排。
+  svg { flex-shrink: 0; }
 
   &:disabled { opacity: 0.5; cursor: not-allowed; }
 }
