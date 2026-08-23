@@ -29,8 +29,10 @@ export function useNotificationBell() {
   async function reloadUnread() {
     try {
       const res = await getUnreadCount()
-      if (res.code === RESPONSE_CODE.SUCCESS && typeof res.data === 'number') {
-        unread.value = res.data
+      if (res.code === RESPONSE_CODE.SUCCESS && res.data != null) {
+        // 后端可能返回 number 或 string，统一转 number
+        const n = Number(res.data)
+        if (Number.isFinite(n) && n >= 0) unread.value = n
       }
     } catch {
       // swallow：兜底轮询场景，不让单次失败打断节奏

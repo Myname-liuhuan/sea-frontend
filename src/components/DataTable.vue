@@ -19,10 +19,10 @@ interface Props {
   loading?: boolean
   rowKey?: keyof T | ((row: T) => string | number)
   emptyText?: string
-  /** 总条数；传入则渲染分页 */
-  total?: number
-  pageSize?: number
-  current?: number
+  /** 总条数；传入则渲染分页。后端 Long 序列化为字符串时也能兼容 */
+  total?: number | string
+  pageSize?: number | string
+  current?: number | string
   pageSizeOptions?: number[]
 }
 
@@ -36,6 +36,13 @@ const props = withDefaults(defineProps<Props>(), {
   rowKey: () => 'id' as keyof T,
 })
 
+// 后端 Long 全局序列化为字符串（防 Snowflake ID 精度丢失），
+// 这里统一转回 number 给分页计算用。
+const FALLBACK_PAGE_SIZE = 10
+const totalNumber = computed(() => Number(props.total ?? 0))
+const pageSizeNumber = computed(() => Number(props.pageSize) || FALLBACK_PAGE_SIZE)
+const currentNumber = computed(() => Number(props.current) || 1)
+
 const emit = defineEmits<{
   (e: 'page-change', page: number): void
   (e: 'page-size-change', size: number): void
@@ -46,7 +53,7 @@ function getRowKey(row: T): string | number {
   return row[props.rowKey] as string | number
 }
 
-const totalPages = computed(() => Math.max(1, Math.ceil((props.total ?? 0) / props.pageSize)))
+const totalPages = computed(() => Math.max(1, Math.ceil(totalNumber.value / pageSizeNumber.value)))
 const showPagination = computed(() => props.total !== undefined)
 
 /** 是否固定列：sticky 显式指定优先；未指定时 key === 'action' 自动启用 */
@@ -99,17 +106,17 @@ function isStickyCol(col: DataTableColumn): boolean {
     </div>
 
     <div v-if="showPagination" class="data-table-pagination">
-      <div class="pagination-info">共 {{ total }} 条</div>
+      <div class="pagination-info">共 {{ totalNumber }} 条</div>
       <div class="pagination-controls">
         <select
-          :value="pageSize"
+          :value="pageSizeNumber"
           class="page-size-select"
           @change="emit('page-size-change', Number(($event.target as HTMLSelectElement).value))"
         >
           <option v-for="size in pageSizeOptions" :key="size" :value="size">{{ size }} 条/页</option>
         </select>
-        <button :disabled="current <= 1" @click="emit('page-change', current - 1)">上一页</button>
-        <button :disabled="current >= totalPages" @click="emit('page-change', current + 1)">下一页</button>
+        <button :disabled="currentNumber <= 1" @click="emit('page-change', currentNumber - 1)">上一页</button>
+        <button :disabled="currentNumber >= totalPages" @click="emit('page-change', currentNumber + 1)">下一页</button>
       </div>
     </div>
   </div>
