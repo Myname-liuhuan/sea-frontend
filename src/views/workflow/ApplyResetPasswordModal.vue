@@ -11,13 +11,19 @@ const emit = defineEmits<{
   (e: 'submitted', taskNo: string): void
 }>()
 
+// 注意：必须传 props.targetUser 的 toRef，避免父组件整对象替换时 hook 内部
+// 闭包仍指向 setup 阶段拿到的旧对象引用。
 const { modalVisible, loading, form, urgencyOptions, open, close, submit } =
-  usePasswordResetApply(props.targetUser)
+  usePasswordResetApply(() => props.targetUser)
 
 defineExpose({ open, close })
 
-async function onSubmit() {
-  await submit((r) => emit('submitted', r.taskNo))
+/**
+ * Arco Modal 的 @before-ok 钩子：返回 false 阻止关闭。
+ * 前端校验失败时返回 false，成功后返回 true 让 Modal 走默认关闭。
+ */
+async function onBeforeOk(): Promise<boolean> {
+  return await submit((r) => emit('submitted', r.taskNo))
 }
 </script>
 
@@ -29,7 +35,7 @@ async function onSubmit() {
     :ok-text="'提交申请'"
     :cancel-text="'取消'"
     :width="480"
-    @ok="onSubmit"
+    @before-ok="onBeforeOk"
     @cancel="close"
     @close="close"
   >

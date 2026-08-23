@@ -47,14 +47,18 @@ const applyTarget = ref<ApplyTarget | null>(null)
 const applyModalRef = ref<InstanceType<typeof ApplyResetPasswordModal> | null>(null)
 
 function openApplyModal(row: ApplyTarget) {
-  applyTarget.value = { id: Number(row.id), username: row.username }
-  applyModalRef.value?.open()
+  const target = { id: Number(row.id), username: row.username }
+  applyTarget.value = target
+  // 同步传当前 row 给 open()，避免 Vue 同步写 ref 后 props 在下一 tick 才更新，
+  // 导致 hook 读到旧值（applyTarget 仍为 null 时传入的 {id:0}）。
+  applyModalRef.value?.open(target)
 }
 
 function onApplySubmitted(taskNo: string) {
   void taskNo
   Message.success('可在"我的申请"查看进度')
-  router.push({ name: 'WorkflowMy', query: { taskNo } }).catch(() => undefined)
+  // 动态路由名是 dyn_<menuId>，跨菜单 id 不稳定；用 path 更稳。
+  router.push({ path: '/workflow/my', query: { taskNo } }).catch(() => undefined)
 }
 </script>
 
@@ -130,9 +134,8 @@ function onApplySubmitted(taskNo: string) {
     </DataTable>
 
     <ApplyResetPasswordModal
-      v-if="applyTarget"
       ref="applyModalRef"
-      :target-user="applyTarget"
+      :target-user="applyTarget || { id: 0, username: '' }"
       @submitted="onApplySubmitted"
     />
 
