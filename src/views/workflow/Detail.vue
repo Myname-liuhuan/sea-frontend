@@ -3,7 +3,11 @@ import { computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { Steps as ASteps } from '@arco-design/web-vue'
 import { useWorkflowDetail } from '@/hooks/useWorkflowDetail'
-import { WORKFLOW_STATUS_LABEL } from '@/types/workflow'
+import {
+  WORKFLOW_STATUS_LABEL,
+  getApprovalStatusLabel,
+  type WorkflowApproval,
+} from '@/types/workflow'
 
 const route = useRoute()
 const { loading, detail, fetchDetail } = useWorkflowDetail()
@@ -23,6 +27,19 @@ watch(
 const statusText = computed(() =>
   detail.value ? WORKFLOW_STATUS_LABEL[detail.value.task.status] || '-' : '-',
 )
+
+/**
+ * 审批节点描述：占位行（approved=null）单独走"待审批"；
+ * 其他节点拼 "审批人 · 时间 · 转交说明 · 意见"，避免显示 "null · null"。
+ */
+function formatApprovalDescription(node: WorkflowApproval): string {
+  if (node.approved == null) return '待审批'
+  const who = node.approverName ?? (node.approverId != null ? `userId=${node.approverId}` : '系统')
+  const parts = [who, node.createTime]
+  if (node.delegatedFrom) parts.push(`被转自 userId=${node.delegatedFrom}`)
+  if (node.comment) parts.push(node.comment)
+  return parts.join(' · ')
+}
 </script>
 
 <template>
@@ -57,10 +74,8 @@ const statusText = computed(() =>
           <a-step
             v-for="(node, idx) in detail.approvals"
             :key="node.id"
-            :title="`第 ${idx + 1} 级 · ${node.approved === 1 ? '通过' : node.approved === 0 ? '拒绝' : '已转交'}`"
-            :description="`${node.approverName || node.approverId} · ${node.createTime} ${
-              node.delegatedFrom ? '（被转自 userId=' + node.delegatedFrom + '）' : ''
-            } ${node.comment ? '\n' + node.comment : ''}`"
+            :title="`第 ${idx + 1} 级 · ${getApprovalStatusLabel(node.approved)}`"
+            :description="formatApprovalDescription(node)"
           />
         </a-steps>
         <div v-else class="empty">暂无审批记录</div>

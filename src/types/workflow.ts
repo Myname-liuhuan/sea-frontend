@@ -50,9 +50,9 @@ export interface WorkflowApproval {
   taskId: number
   nodeKey: string
   nodeOrder: number
-  approverId: number
+  approverId: number | null
   approverName?: string
-  approved: number
+  approved: number | null
   comment?: string
   delegatedFrom?: number
   createTime: string
@@ -140,6 +140,36 @@ export const WORKFLOW_STATUS_LABEL: Record<number, string> = {
   3: '已拒绝',
   4: '已撤回',
   5: '已完成',
+}
+
+/**
+ * 审批节点状态枚举。
+ *
+ * <p>apply 时后端按 BPMN 链路预生成占位行，此时 approved 留空 → 前端用 PENDING(null) 标识"等待中"。
+ * 数值约定与后端 WorkflowApprovalPO.approved 一致。
+ */
+export const APPROVAL_STATUS = {
+  /** 等待中（apply 时预生成占位） */
+  PENDING: null,
+  /** 通过 */
+  APPROVED: 1,
+  /** 拒绝 */
+  REJECTED: 0,
+  /** 已转交（reassign 单独插入的事件行） */
+  DELEGATED: -1,
+} as const
+
+/** 审批节点状态文案；PENDING(null) 走 getApprovalStatusLabel 专门分支 */
+export const APPROVAL_STATUS_LABEL: Record<number, string> = {
+  [APPROVAL_STATUS.APPROVED]: '通过',
+  [APPROVAL_STATUS.REJECTED]: '拒绝',
+  [APPROVAL_STATUS.DELEGATED]: '已转交',
+}
+
+/** approved 可能为 null（等待中占位）或后端未来新增的状态码，统一收口处理 */
+export function getApprovalStatusLabel(approved: number | null | undefined): string {
+  if (approved == null) return '等待中'
+  return APPROVAL_STATUS_LABEL[approved] ?? '未知'
 }
 
 // ============ 流程模型（设计器） ============
