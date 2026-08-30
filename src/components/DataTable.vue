@@ -168,16 +168,17 @@ onBeforeUnmount(() => {
     top: 0;
     right: 0;
     bottom: 0;
-    width: 24px;
+    width: 28px;
     pointer-events: none;
-    // 渐变从二级背景过渡到透明，暗示"列在后面被遮住了"
+    // 渐变起点必须比容器背景深（bg-tertiary #f5f5f5 vs 容器 bg-secondary #ffffff），
+    // 否则视觉上和容器融为一体，用户根本看不出"右边有东西被遮住了"。
     // 圆角和 container 一致，避免在右上角露出底色
     border-top-right-radius: var(--radius-lg);
     border-bottom-right-radius: var(--radius-lg);
     background: linear-gradient(
       to left,
-      var(--bg-secondary),
-      transparent
+      var(--bg-tertiary),
+      rgba(255, 255, 255, 0)
     );
   }
 }
@@ -225,17 +226,24 @@ onBeforeUnmount(() => {
     position: sticky;
     right: 0;
     z-index: 1;
-    // 加深背景，与左侧数据列形成色差，静态时也能看出"这列是浮起来的"
-    background: var(--bg-secondary);
+    // bg-tertiary 比数据列的 bg-secondary 深一档，与左侧形成色差，
+    // 静态时也能看出"这列是浮起来的"
+    background: var(--bg-tertiary);
     // 硬分割线把"悬浮列"和"滚动列"在视觉上切开
     box-shadow: -1px 0 0 var(--border-color);
   }
   thead .col-sticky {
-    background: var(--bg-primary);
+    background: var(--bg-tertiary);
     z-index: 2; // 表头要压在 td 之上
   }
   tbody tr:hover .col-sticky {
     background: var(--bg-primary);
+  }
+  tbody tr:hover .col-sticky + .col-sticky,
+  tbody tr:hover td:last-child.col-sticky {
+    // hover 行内最后一列（操作列）跟非 hover 行保持同一深度，
+    // 不然会因为 hover 把"操作列"再次压平、视觉上"沉下去"
+    background: var(--bg-tertiary);
   }
 }
 
