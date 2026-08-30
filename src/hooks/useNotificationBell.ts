@@ -1,5 +1,6 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useUserStore } from '@/store'
+import router from '@/router'
 import { getUnreadCount, getInAppMessages, markMessageRead, markAllRead } from '@/api/workflow/notification'
 import type { InAppMessage } from '@/types/workflow'
 import { RESPONSE_CODE } from '@/constants'
@@ -145,6 +146,18 @@ export function useNotificationBell() {
     disconnectWs()
   })
 
+  /**
+   * 通知里的跳转链接是否能在当前路由表里命中。
+   *
+   * <p>后端下发的 msg.link 可能是任意路径（含未注册的），不能跳的就不渲染"查看"按钮，
+   * 避免点过去跳 404。router 未就绪（动态路由尚未注入完成）时保守返回 false。
+   */
+  function canNavigate(link: string | undefined): boolean {
+    if (!link) return false
+    if (!router.isReady()) return false
+    return router.resolve(link).matched.length > 0
+  }
+
   return {
     unread,
     unreadLabel,
@@ -155,5 +168,6 @@ export function useNotificationBell() {
     openInbox,
     onRead,
     onReadAll,
+    canNavigate,
   }
 }

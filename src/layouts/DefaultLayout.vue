@@ -26,6 +26,7 @@ const {
   openInbox,
   onRead,
   onReadAll,
+  canNavigate,
 } = useNotificationBell()
 
 function handleChangePassword() {
@@ -169,7 +170,7 @@ function handleChangePassword() {
                     <div class="inbox-meta">
                       <span>{{ msg.createdAt }}</span>
                       <a-link v-if="msg.readFlag === 0" @click="onRead(msg.id)">标已读</a-link>
-                      <router-link v-if="msg.link" :to="msg.link">查看</router-link>
+                      <router-link v-if="canNavigate(msg.link)" :to="msg.link as string">查看</router-link>
                     </div>
                   </li>
                 </ul>
