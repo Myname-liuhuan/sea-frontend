@@ -316,19 +316,6 @@ const {
   }
 }
 
-.action-btn {
-  padding: 4px 8px;
-  font-size: 12px;
-  color: var(--color-info);
-  background: none;
-  border: none;
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-
-  &:hover { background: #e6f7ff; }
-  &.danger { color: var(--color-danger); &:hover { background: #fff1f0; } }
-}
-
 .form-group {
   margin-bottom: var(--space-md);
 

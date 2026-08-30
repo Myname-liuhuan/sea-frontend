@@ -148,9 +148,11 @@ const modalOkText = () => {
         <span class="status-tag">{{ WORKFLOW_STATUS_LABEL[row.status] || '-' }}</span>
       </template>
       <template #cell-action="{ row }">
-        <button class="action-btn success" @click="openApprove(row, true)">通过</button>
-        <button class="action-btn danger" @click="openApprove(row, false)">拒绝</button>
-        <button class="action-btn" @click="openReassign(row)">转交</button>
+        <div class="table-actions">
+          <button class="action-btn success" @click="openApprove(row, true)">通过</button>
+          <button class="action-btn danger" @click="openApprove(row, false)">拒绝</button>
+          <button class="action-btn" @click="openReassign(row)">转交</button>
+        </div>
       </template>
     </DataTable>
 
@@ -187,14 +189,5 @@ const modalOkText = () => {
 .urgency-tag.urgent {
   color: var(--color-warning);
   font-weight: 600;
-}
-.action-btn.success {
-  color: var(--color-success);
-}
-.action-btn.danger {
-  color: var(--color-danger);
-}
-.action-btn {
-  margin-right: var(--space-sm);
 }
 </style>

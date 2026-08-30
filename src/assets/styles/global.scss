@@ -344,6 +344,7 @@ a:hover {
   white-space: nowrap;
   &:hover { background: #e6f7ff; }
   &.danger { color: var(--color-danger); &:hover { background: #fff1f0; } }
+  &.success { color: var(--color-success); &:hover { background: #f6ffed; } }
 }
 
 .status-tag {
