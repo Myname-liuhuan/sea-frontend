@@ -170,16 +170,17 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped lang="scss">
-// ========== 设计 token 分配（5 层灰度） ==========
+// ========== 设计 token 分配 ==========
+// 原则：视觉差异只在差异真实存在时才有意义。
+// 操作列「浮起感」（背景色 + 投影）和右侧渐变遮罩受同一套 .has-overflow-right 门控：
+// 无溢出 → 操作列与其他列视觉一致（看起来就是一张完整的表）
+// 有溢出 → 操作列显出深度（bg-tertiary + shadow）信号「我被钉住」
+//
 // ① 表头：           --bg-primary    #fafafa
 // ② 数据行：         --bg-secondary #ffffff
-// ③ hover 行：       --bg-primary    #fafafa
-// ④ tbody 悬浮列：   --bg-tertiary   #f5f5f5（永远比数据列深一档）
-// ⑤ thead 悬浮列：   --bg-primary    #fafafa（同表头，border-left 标识"这是浮列"）
-//
-// 关键：thead 操作列用 primary 而非 tertiary，
-// 让表头"操作"二字下方与表头其余列同色 ——
-// 只靠 1px border-left 提示"这列不一样"，避免和表头其余列同色干扰。
+// ③ hover 行：       --bg-tertiary   #f5f5f5（与「操作列浮起色」同档 → hover 行整体一致）
+// ④ tbody 浮列（有溢出）：  --bg-tertiary   #f5f5f5
+// ⑤ thead 浮列（有溢出）：  --bg-primary    #fafafa（与表头其余列同色，仅靠 1px 内边线标识）
 
 .data-table-wrapper {
   position: relative; // 渐变遮罩的锚点（不能放 container —— overflow-x:auto 会裁掉 absolute 子元素）
@@ -260,12 +261,21 @@ onBeforeUnmount(() => {
     }
   }
 
-  // ④ ⑤ 悬浮列（操作列）
+  // ④ ⑤ 悬浮列（操作列）—— 视觉强化受 .has-overflow-right 门控
+  // 无溢出时只保留功能性 position: sticky，视觉上与其他列完全一致
   .col-sticky {
     position: sticky;
     right: 0;
+  }
+}
+
+// .has-overflow-right 在外层 wrapper 上，必须从 wrapper 向下选，不能嵌套在 .data-table 里
+// （否则 SCSS 展开成 .data-table .has-overflow-right .col-sticky，要求 has-overflow-right
+// 是 .data-table 的后代，但实际它在 .data-table 的祖先 wrapper 上 → 匹配不上）
+.data-table-wrapper.has-overflow-right .data-table {
+  .col-sticky {
     z-index: 1;
-    // tbody 永远 tertiary，浮起感来自"和数据列的色差"
+    // tbody 浮列 tertiary，浮起感来自"和数据列的色差"
     background: var(--bg-tertiary);
     // 立体"侧翼"：内 1px 亮边 + 外 软投影
     box-shadow:
