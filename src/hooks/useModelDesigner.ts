@@ -233,45 +233,50 @@ export function useModelDesigner() {
       Message.warning('请填写名称 / Key / 业务类型')
       return
     }
-    if (mode.value === 'new') {
-      const res = await createModel({
+    try {
+      if (mode.value === 'new') {
+        const res = await createModel({
+          name: metaForm.name,
+          key: metaForm.key,
+          businessType: metaForm.businessType,
+          description: metaForm.description,
+        })
+        if (res.code !== RESPONSE_CODE.SUCCESS || !res.data) {
+          Message.error(res.message || '新建失败')
+          return
+        }
+        currentModel.value = res.data
+        modelId.value = res.data.id
+        mode.value = 'edit'
+        await router.replace({
+          path: '/workflow/designer',
+          query: { id: res.data.id, mode: 'edit' },
+        })
+        Message.success('已创建，开始编辑流程')
+        return
+      }
+
+      // edit 模式：PUT 更新元数据。
+      // 之前漏了这条分支，导致编辑现有模型时按钮"无反应"。
+      if (!modelId.value) {
+        Message.warning('缺少模型 ID，无法保存')
+        return
+      }
+      const res = await updateModel(modelId.value, {
         name: metaForm.name,
-        key: metaForm.key,
         businessType: metaForm.businessType,
         description: metaForm.description,
       })
-      if (res.code !== RESPONSE_CODE.SUCCESS || !res.data) {
-        Message.error(res.message || '新建失败')
+      if (res.code !== RESPONSE_CODE.SUCCESS) {
+        Message.error(res.message || '保存失败')
         return
       }
-      currentModel.value = res.data
-      modelId.value = res.data.id
-      mode.value = 'edit'
-      await router.replace({
-        path: '/workflow/designer',
-        query: { id: res.data.id, mode: 'edit' },
-      })
-      Message.success('已创建，开始编辑流程')
-      return
+      currentModel.value = res.data ?? currentModel.value
+      Message.success('元数据已保存')
+    } catch {
+      // request.ts 已 Message.error；这里包 try/catch 是因为之前整段裸 await，
+      // 500/网络错时按钮无响应、无 loading、无 Toast 反馈
     }
-
-    // edit 模式：PUT 更新元数据。
-    // 之前漏了这条分支，导致编辑现有模型时按钮"无反应"。
-    if (!modelId.value) {
-      Message.warning('缺少模型 ID，无法保存')
-      return
-    }
-    const res = await updateModel(modelId.value, {
-      name: metaForm.name,
-      businessType: metaForm.businessType,
-      description: metaForm.description,
-    })
-    if (res.code !== RESPONSE_CODE.SUCCESS) {
-      Message.error(res.message || '保存失败')
-      return
-    }
-    currentModel.value = res.data ?? currentModel.value
-    Message.success('元数据已保存')
   }
 
   async function saveBpmn() {
@@ -310,6 +315,8 @@ export function useModelDesigner() {
       } else {
         Message.error(res.message || '保存失败')
       }
+    } catch {
+      // request.ts 已 Message.error；吞掉异常避免 unhandled rejection，按钮可重新点击
     } finally {
       saving.value = false
     }
@@ -334,16 +341,20 @@ export function useModelDesigner() {
    */
   async function applyHistoryXml(version: number): Promise<void> {
     if (!modelId.value) return
-    const res = await getModelVersionBpmn(modelId.value, version)
-    if (res.code !== RESPONSE_CODE.SUCCESS || !res.data) {
-      Message.error(res.message || '取历史版本失败')
-      return
+    try {
+      const res = await getModelVersionBpmn(modelId.value, version)
+      if (res.code !== RESPONSE_CODE.SUCCESS || !res.data) {
+        Message.error(res.message || '取历史版本失败')
+        return
+      }
+      const inst = modeler.value
+      if (!inst) return
+      await inst.importXML(res.data)
+      currentXml.value = res.data
+      Message.success(`已应用 v${version}`)
+    } catch {
+      // request.ts 已 Message.error；吞掉异常避免 unhandled rejection
     }
-    const inst = modeler.value
-    if (!inst) return
-    await inst.importXML(res.data)
-    currentXml.value = res.data
-    Message.success(`已应用 v${version}`)
   }
 
   async function deploy() {
@@ -359,6 +370,8 @@ export function useModelDesigner() {
       } else {
         Message.error(res.message || '部署失败')
       }
+    } catch {
+      // request.ts 已 Message.error；吞掉异常避免 unhandled rejection
     } finally {
       deploying.value = false
     }

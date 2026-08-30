@@ -82,6 +82,8 @@ export function useLoginPage() {
     loading.value = true
     try {
       await processLogin()
+    } catch {
+      // processLogin 内部已 Message.error + 回滚 token，这里吞掉异常避免 unhandled rejection
     } finally {
       loading.value = false
     }

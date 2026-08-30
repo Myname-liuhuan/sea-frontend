@@ -62,6 +62,8 @@ export function useMenuPage() {
         menuTree.value = res.data.map(toTreeNodeDisplay)
         expandedKeys.value = res.data.map((m: SysMenu) => String(m.id))
       }
+    } catch {
+      // request.ts 已 Message.error；吞掉异常避免 unhandled rejection
     } finally {
       loading.value = false
     }
@@ -114,6 +116,8 @@ export function useMenuPage() {
         modalVisible.value = false
         fetchMenuTree()
       }
+    } catch {
+      // request.ts 已 Message.error；吞掉异常避免 unhandled rejection
     } finally {
       modalLoading.value = false
     }
@@ -126,10 +130,14 @@ export function useMenuPage() {
       okText: '确定',
       cancelText: '取消',
       async onOk() {
-        const res = await deleteMenu(menuId)
-        if (res.code === RESPONSE_CODE.SUCCESS) {
-          Message.success('删除成功')
-          fetchMenuTree()
+        try {
+          const res = await deleteMenu(menuId)
+          if (res.code === RESPONSE_CODE.SUCCESS) {
+            Message.success('删除成功')
+            fetchMenuTree()
+          }
+        } catch {
+          // request.ts 已 Message.error；吞掉异常避免 unhandled rejection
         }
       },
     })

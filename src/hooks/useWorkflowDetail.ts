@@ -25,6 +25,9 @@ export function useWorkflowDetail() {
         return
       }
       detail.value = res.data
+    } catch {
+      // request.ts 已 Message.error；这里只需清掉 detail，避免空白页面残留旧数据
+      detail.value = null
     } finally {
       loading.value = false
     }

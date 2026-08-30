@@ -58,24 +58,34 @@ export function usePendingApprovals() {
    * 行内审批（通过 / 拒绝）。comment 可选填。
    */
   async function approve(row: WorkflowTask, approved: boolean, comment?: string): Promise<boolean> {
-    const req: ApproveRequest = { taskNo: row.taskNo, approved, comment }
-    const res = await approveTask(req)
-    if (res.code !== RESPONSE_CODE.SUCCESS) return false
-    Message.success(approved ? '已通过' : '已拒绝')
-    await fetchData()
-    return true
+    try {
+      const req: ApproveRequest = { taskNo: row.taskNo, approved, comment }
+      const res = await approveTask(req)
+      if (res.code !== RESPONSE_CODE.SUCCESS) return false
+      Message.success(approved ? '已通过' : '已拒绝')
+      await fetchData()
+      return true
+    } catch {
+      // request.ts 已 Message.error；吞掉异常避免 unhandled rejection
+      return false
+    }
   }
 
   /**
    * 行内转交。
    */
   async function reassign(row: WorkflowTask, toUserId: number, comment?: string): Promise<boolean> {
-    const req: ReassignRequest = { taskNo: row.taskNo, toUserId, comment }
-    const res = await reassignTask(req)
-    if (res.code !== RESPONSE_CODE.SUCCESS) return false
-    Message.success('已转交')
-    await fetchData()
-    return true
+    try {
+      const req: ReassignRequest = { taskNo: row.taskNo, toUserId, comment }
+      const res = await reassignTask(req)
+      if (res.code !== RESPONSE_CODE.SUCCESS) return false
+      Message.success('已转交')
+      await fetchData()
+      return true
+    } catch {
+      // request.ts 已 Message.error；吞掉异常避免 unhandled rejection
+      return false
+    }
   }
 
   return {

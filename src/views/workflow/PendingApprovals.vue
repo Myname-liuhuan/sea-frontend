@@ -67,18 +67,23 @@ function closeOp() {
 
 async function submitOp() {
   if (!opRow.value || !opMode.value) return
-  if (opMode.value === 'approve') {
-    await approve(
-      { taskNo: opRow.value.taskNo } as never,
-      opApproved.value,
-      approveForm.comment || undefined,
-    )
-  } else if (opMode.value === 'reassign' && reassignForm.targetUserId) {
-    await reassign(
-      { taskNo: opRow.value.taskNo } as never,
-      Number(reassignForm.targetUserId),
-      reassignForm.comment || undefined,
-    )
+  try {
+    if (opMode.value === 'approve') {
+      await approve(
+        { taskNo: opRow.value.taskNo } as never,
+        opApproved.value,
+        approveForm.comment || undefined,
+      )
+    } else if (opMode.value === 'reassign' && reassignForm.targetUserId) {
+      await reassign(
+        { taskNo: opRow.value.taskNo } as never,
+        Number(reassignForm.targetUserId),
+        reassignForm.comment || undefined,
+      )
+    }
+  } catch {
+    // request.ts 已 Message.error；吞掉异常避免 unhandled rejection
+    return
   }
   closeOp()
 }

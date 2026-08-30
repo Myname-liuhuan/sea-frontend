@@ -110,6 +110,8 @@ export function useRolePage() {
         closeModal()
         fetchData()
       }
+    } catch {
+      // request.ts 已 Message.error；吞掉异常避免 unhandled rejection
     } finally {
       modalLoading.value = false
     }
@@ -123,10 +125,14 @@ export function useRolePage() {
       cancelText: '取消',
       okButtonProps: { status: 'danger' },
       onOk: async () => {
-        const res = await deleteRole(record.id)
-        if (res.code === RESPONSE_CODE.SUCCESS) {
-          Message.success('删除成功')
-          fetchData()
+        try {
+          const res = await deleteRole(record.id)
+          if (res.code === RESPONSE_CODE.SUCCESS) {
+            Message.success('删除成功')
+            fetchData()
+          }
+        } catch {
+          // request.ts 已 Message.error；吞掉异常避免 unhandled rejection
         }
       },
     })
@@ -168,6 +174,8 @@ export function useRolePage() {
         username: user.username,
       }))
       selectedUserIds.value = assignedRes.data ?? []
+    } catch {
+      // request.ts 已 Message.error；吞掉异常，避免弹窗内空数据让用户以为没选
     } finally {
       userLoading.value = false
     }
@@ -185,6 +193,8 @@ export function useRolePage() {
         Message.success('分配用户成功')
         closeUserModal()
       }
+    } catch {
+      // request.ts 已 Message.error；吞掉异常避免 unhandled rejection
     } finally {
       userModalLoading.value = false
     }
@@ -218,6 +228,8 @@ export function useRolePage() {
       menuTree.value = (menuRes.data ?? []).map(toTreeNodeDisplay)
       selectedMenuIds.value = assignedRes.data ?? []
       menuExpandedKeys.value = menuTree.value.map((node) => node.id)
+    } catch {
+      // request.ts 已 Message.error；吞掉异常，避免弹窗内空数据让用户以为没选
     } finally {
       menuLoading.value = false
     }
@@ -235,6 +247,8 @@ export function useRolePage() {
         Message.success('分配菜单成功')
         closeMenuModal()
       }
+    } catch {
+      // request.ts 已 Message.error；吞掉异常避免 unhandled rejection
     } finally {
       menuModalLoading.value = false
     }

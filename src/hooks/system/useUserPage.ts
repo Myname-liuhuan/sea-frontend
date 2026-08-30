@@ -102,6 +102,8 @@ export function useUserPage() {
         closeModal()
         fetchData()
       }
+    } catch {
+      // request.ts 已 Message.error；吞掉异常避免 unhandled rejection
     } finally {
       modalLoading.value = false
     }
@@ -114,10 +116,14 @@ export function useUserPage() {
       okText: '确定',
       cancelText: '取消',
       async onOk() {
-        const res = await deleteUser(row.id)
-        if (res.code === RESPONSE_CODE.SUCCESS) {
-          Message.success('删除成功')
-          fetchData()
+        try {
+          const res = await deleteUser(row.id)
+          if (res.code === RESPONSE_CODE.SUCCESS) {
+            Message.success('删除成功')
+            fetchData()
+          }
+        } catch {
+          // request.ts 已 Message.error；吞掉异常避免 unhandled rejection
         }
       },
     })

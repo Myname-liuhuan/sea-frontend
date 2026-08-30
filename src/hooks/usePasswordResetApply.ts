@@ -81,6 +81,10 @@ export function usePasswordResetApply(
       modalVisible.value = false
       onSuccess?.(res.data)
       return true
+    } catch {
+      // request.ts 已 Message.error；Arco @before-ok 收到 reject Promise 会卡确认按钮 loading，
+      // catch 吞掉异常返回 false，让 Arco 正常关闭"提交中"状态、保留弹窗供用户重试
+      return false
     } finally {
       loading.value = false
     }

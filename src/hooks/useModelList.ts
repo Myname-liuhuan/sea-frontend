@@ -86,12 +86,16 @@ export function useModelList() {
       okText: '确定',
       cancelText: '取消',
       async onOk() {
-        const res = await deleteModel(row.id)
-        if (res.code === RESPONSE_CODE.SUCCESS) {
-          Message.success('已删除')
-          fetchData()
-        } else {
-          Message.error(res.message || '删除失败')
+        try {
+          const res = await deleteModel(row.id)
+          if (res.code === RESPONSE_CODE.SUCCESS) {
+            Message.success('已删除')
+            fetchData()
+          } else {
+            Message.error(res.message || '删除失败')
+          }
+        } catch {
+          // request.ts 已 Message.error；吞掉异常避免 unhandled rejection
         }
       },
     })
@@ -104,12 +108,16 @@ export function useModelList() {
       okText: '部署',
       cancelText: '取消',
       async onOk() {
-        const res = await deployModel(row.id)
-        if (res.code === RESPONSE_CODE.SUCCESS && res.data) {
-          Message.success(`部署成功 (v${res.data.version})`)
-          fetchData()
-        } else {
-          Message.error(res.message || '部署失败')
+        try {
+          const res = await deployModel(row.id)
+          if (res.code === RESPONSE_CODE.SUCCESS && res.data) {
+            Message.success(`部署成功 (v${res.data.version})`)
+            fetchData()
+          } else {
+            Message.error(res.message || '部署失败')
+          }
+        } catch {
+          // request.ts 已 Message.error；吞掉异常避免 unhandled rejection
         }
       },
     })
@@ -123,12 +131,16 @@ export function useModelList() {
       okText: '克隆',
       cancelText: '取消',
       async onOk() {
-        const res = await cloneModel(row.id, newName)
-        if (res.code === RESPONSE_CODE.SUCCESS) {
-          Message.success('已克隆')
-          fetchData()
-        } else {
-          Message.error(res.message || '克隆失败')
+        try {
+          const res = await cloneModel(row.id, newName)
+          if (res.code === RESPONSE_CODE.SUCCESS) {
+            Message.success('已克隆')
+            fetchData()
+          } else {
+            Message.error(res.message || '克隆失败')
+          }
+        } catch {
+          // request.ts 已 Message.error；吞掉异常避免 unhandled rejection
         }
       },
     })

@@ -38,6 +38,8 @@ export function useTable<T, P extends PageQuery = PageQuery>(
       pagination.total = res.total
       pagination.current = res.pageNum
       pagination.pageSize = res.pageSize
+    } catch {
+      // request.ts 已 Message.error；吞掉异常避免 unhandled rejection，列表保持上一次结果
     } finally {
       loading.value = false
     }

@@ -51,18 +51,24 @@ async function loadList(): Promise<void> {
     } else {
       Message.error(res.message || '加载版本失败')
     }
+  } catch {
+    // request.ts 已 Message.error；吞掉异常避免 unhandled rejection
   } finally {
     loading.value = false
   }
 }
 
 async function onViewDiff(row: WorkflowModelVersion): Promise<void> {
-  const res = await getModelVersionBpmn(props.modelId ?? '', row.version)
-  if (res.code !== RESPONSE_CODE.SUCCESS || !res.data) {
-    Message.error(res.message || '取版本 XML 失败')
-    return
+  try {
+    const res = await getModelVersionBpmn(props.modelId ?? '', row.version)
+    if (res.code !== RESPONSE_CODE.SUCCESS || !res.data) {
+      Message.error(res.message || '取版本 XML 失败')
+      return
+    }
+    emit('diff', { version: row.version, xml: res.data })
+  } catch {
+    // request.ts 已 Message.error；吞掉异常避免 unhandled rejection
   }
-  emit('diff', { version: row.version, xml: res.data })
 }
 
 function onRollback(row: WorkflowModelVersion): void {
@@ -73,17 +79,21 @@ function onRollback(row: WorkflowModelVersion): void {
     cancelText: '取消',
     async onOk() {
       if (!props.modelId) return
-      const res = await rollbackModelToVersion(
-        props.modelId,
-        row.version,
-        `从 v${row.version} 回滚`,
-      )
-      if (res.code === RESPONSE_CODE.SUCCESS) {
-        Message.success(`已回滚到 v${row.version}，新增历史 v${res.data}`)
-        emit('rolledBack')
-        await loadList()
-      } else {
-        Message.error(res.message || '回滚失败')
+      try {
+        const res = await rollbackModelToVersion(
+          props.modelId,
+          row.version,
+          `从 v${row.version} 回滚`,
+        )
+        if (res.code === RESPONSE_CODE.SUCCESS) {
+          Message.success(`已回滚到 v${row.version}，新增历史 v${res.data}`)
+          emit('rolledBack')
+          await loadList()
+        } else {
+          Message.error(res.message || '回滚失败')
+        }
+      } catch {
+        // request.ts 已 Message.error；吞掉异常避免 unhandled rejection
       }
     },
   })

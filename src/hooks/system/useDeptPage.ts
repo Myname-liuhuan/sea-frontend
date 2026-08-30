@@ -50,6 +50,8 @@ export function useDeptPage() {
       if (res.code === RESPONSE_CODE.SUCCESS) {
         treeData.value = res.data || []
       }
+    } catch {
+      // request.ts 已 Message.error；吞掉异常，避免 unhandled rejection
     } finally {
       loading.value = false
     }
@@ -119,6 +121,8 @@ export function useDeptPage() {
       } else {
         Message.error(res.message || '操作失败')
       }
+    } catch {
+      // request.ts 已 Message.error；吞掉异常避免 unhandled rejection
     } finally {
       modalLoading.value = false
     }
@@ -131,12 +135,16 @@ export function useDeptPage() {
       okText: '确定',
       cancelText: '取消',
       async onOk() {
-        const res = await deleteDept(row.id)
-        if (res.code === RESPONSE_CODE.SUCCESS) {
-          Message.success('删除成功')
-          fetchData()
-        } else {
-          Message.error(res.message || '删除失败')
+        try {
+          const res = await deleteDept(row.id)
+          if (res.code === RESPONSE_CODE.SUCCESS) {
+            Message.success('删除成功')
+            fetchData()
+          } else {
+            Message.error(res.message || '删除失败')
+          }
+        } catch {
+          // request.ts 已 Message.error；吞掉异常避免 unhandled rejection
         }
       },
     })

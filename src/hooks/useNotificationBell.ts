@@ -49,6 +49,8 @@ export function useNotificationBell() {
       if (res.code === RESPONSE_CODE.SUCCESS && res.data) {
         recent.value = res.data.rows
       }
+    } catch {
+      // request.ts 已 Message.error；吞掉异常避免 unhandled rejection，面板保持打开
     } finally {
       inboxLoading.value = false
     }

@@ -45,6 +45,8 @@ export function useChangePasswordFirst() {
       userStore.clearMustChangePassword()
       userStore.clearToken()
       router.replace({ name: 'Login' })
+    } catch {
+      // request.ts 已 Message.error；这里吞掉异常避免 unhandled rejection
     } finally {
       loading.value = false
     }
