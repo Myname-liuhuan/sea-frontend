@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="T extends Record<string, unknown>">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 
 /** 列定义：key / title / width / align / ellipsis / sticky */
 export interface DataTableColumn {
@@ -60,11 +60,48 @@ const showPagination = computed(() => props.total !== undefined)
 function isStickyCol(col: DataTableColumn): boolean {
   return col.sticky ?? col.key === 'action'
 }
+
+// ========== 横向溢出感知 ==========
+// 列宽总和 > 容器宽度时容器出现横向滚动条，操作列 sticky 悬浮在右边缘。
+// 用户第一眼会以为"创建时间列被覆盖"，所以加：
+//   1. 静态视觉强化（阴影 + 加深背景），让"悬浮"在静态时也可读
+//   2. 滚动联动：右侧渐变遮罩在"还能往右滚"时才出现，滚到底淡出
+const containerRef = ref<HTMLElement | null>(null)
+const canScrollRight = ref(false)
+
+function updateOverflowState(): void {
+  const el = containerRef.value
+  if (!el) return
+  // scrollLeft + clientWidth < scrollWidth - 1 表示还有可滚动空间
+  // 用 1px 容差避免亚像素抖动让 class 反复 toggle
+  canScrollRight.value =
+    el.scrollLeft + el.clientWidth < el.scrollWidth - 1
+}
+
+let resizeObserver: ResizeObserver | null = null
+onMounted(() => {
+  const el = containerRef.value
+  if (!el) return
+  el.addEventListener('scroll', updateOverflowState, { passive: true })
+  // 内容/容器尺寸变化时重新计算（例如响应式折叠菜单导致容器宽度变化）
+  resizeObserver = new ResizeObserver(updateOverflowState)
+  resizeObserver.observe(el)
+  // 立即跑一次，否则首屏不会出现遮罩
+  updateOverflowState()
+})
+onBeforeUnmount(() => {
+  containerRef.value?.removeEventListener('scroll', updateOverflowState)
+  resizeObserver?.disconnect()
+  resizeObserver = null
+})
 </script>
 
 <template>
-  <div class="data-table-wrapper">
-    <div class="data-table-container">
+  <div
+    class="data-table-wrapper"
+    :class="{ 'has-overflow-right': canScrollRight }"
+  >
+    <div ref="containerRef" class="data-table-container">
       <table class="data-table">
         <thead>
           <tr>
@@ -123,6 +160,28 @@ function isStickyCol(col: DataTableColumn): boolean {
 </template>
 
 <style scoped lang="scss">
+.data-table-wrapper {
+  position: relative; // 渐变遮罩的锚点（必须放在 wrapper，不能放 container —— container overflow-x:auto 会裁掉 absolute 子元素）
+  &.has-overflow-right::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 24px;
+    pointer-events: none;
+    // 渐变从二级背景过渡到透明，暗示"列在后面被遮住了"
+    // 圆角和 container 一致，避免在右上角露出底色
+    border-top-right-radius: var(--radius-lg);
+    border-bottom-right-radius: var(--radius-lg);
+    background: linear-gradient(
+      to left,
+      var(--bg-secondary),
+      transparent
+    );
+  }
+}
+
 .data-table-container {
   background: var(--bg-secondary);
   border-radius: var(--radius-lg);
@@ -166,9 +225,10 @@ function isStickyCol(col: DataTableColumn): boolean {
     position: sticky;
     right: 0;
     z-index: 1;
+    // 加深背景，与左侧数据列形成色差，静态时也能看出"这列是浮起来的"
     background: var(--bg-secondary);
-    // 左侧投影暗示"这一列在浮动"
-    box-shadow: -1px 0 0 var(--border-light);
+    // 硬分割线把"悬浮列"和"滚动列"在视觉上切开
+    box-shadow: -1px 0 0 var(--border-color);
   }
   thead .col-sticky {
     background: var(--bg-primary);

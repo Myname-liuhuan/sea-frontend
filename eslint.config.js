@@ -33,6 +33,7 @@ export default [
         KeyboardEvent: 'readonly',
         File: 'readonly',
         Blob: 'readonly',
+        ResizeObserver: 'readonly',
       },
     },
     rules: {
