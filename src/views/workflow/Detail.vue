@@ -48,7 +48,12 @@ const statusText = computed(() =>
 
       <section class="card">
         <h3>审批链路</h3>
-        <a-steps direction="vertical" :current="detail.approvals.length">
+        <!-- 刚提交还没人审批时 approvals 是空数组，v-for 不会渲染任何 step，给个兜底文案避免整块空白 -->
+        <a-steps
+          v-if="detail.approvals.length"
+          direction="vertical"
+          :current="detail.approvals.length"
+        >
           <a-step
             v-for="(node, idx) in detail.approvals"
             :key="node.id"
@@ -58,6 +63,7 @@ const statusText = computed(() =>
             } ${node.comment ? '\n' + node.comment : ''}`"
           />
         </a-steps>
+        <div v-else class="empty">暂无审批记录</div>
       </section>
     </template>
     <div v-else class="empty">未找到工单</div>

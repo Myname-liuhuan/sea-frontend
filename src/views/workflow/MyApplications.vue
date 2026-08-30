@@ -77,7 +77,10 @@ const columns: DataTableColumn[] = [
         <span class="status-tag">{{ WORKFLOW_STATUS_LABEL[row.status] || '-' }}</span>
       </template>
       <template #cell-action="{ row }">
-        <router-link :to="{ name: 'WorkflowDetail', query: { taskNo: row.taskNo } }">
+        <router-link
+          class="action-btn"
+          :to="{ name: 'WorkflowDetail', query: { taskNo: row.taskNo } }"
+        >
           详情
         </router-link>
       </template>
