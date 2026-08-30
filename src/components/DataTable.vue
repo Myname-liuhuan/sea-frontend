@@ -160,24 +160,47 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped lang="scss">
+// ========== 设计 token 分配（5 层灰度） ==========
+// ① 表头：           --bg-primary    #fafafa
+// ② 数据行：         --bg-secondary #ffffff
+// ③ hover 行：       --bg-primary    #fafafa
+// ④ tbody 悬浮列：   --bg-tertiary   #f5f5f5（永远比数据列深一档）
+// ⑤ thead 悬浮列：   --bg-primary    #fafafa（同表头，border-left 标识"这是浮列"）
+//
+// 关键：thead 操作列用 primary 而非 tertiary，
+// 让表头"操作"二字下方与表头其余列同色 ——
+// 只靠 1px border-left 提示"这列不一样"，避免和表头其余列同色干扰。
+
 .data-table-wrapper {
-  position: relative; // 渐变遮罩的锚点（必须放在 wrapper，不能放 container —— container overflow-x:auto 会裁掉 absolute 子元素）
+  position: relative; // 渐变遮罩的锚点（不能放 container —— overflow-x:auto 会裁掉 absolute 子元素）
+
+  // 渐变遮罩：右侧 32px 渐变 + 1px 内侧高光
+  // 起点用 bg-tertiary 与白色容器形成 6% 灰度差
   &.has-overflow-right::after {
     content: '';
     position: absolute;
     top: 0;
     right: 0;
     bottom: 0;
-    width: 28px;
+    width: 32px;
     pointer-events: none;
-    // 渐变起点必须比容器背景深（bg-tertiary #f5f5f5 vs 容器 bg-secondary #ffffff），
-    // 否则视觉上和容器融为一体，用户根本看不出"右边有东西被遮住了"。
-    // 圆角和 container 一致，避免在右上角露出底色
     border-top-right-radius: var(--radius-lg);
     border-bottom-right-radius: var(--radius-lg);
     background: linear-gradient(
       to left,
       var(--bg-tertiary),
+      rgba(245, 245, 245, 0)
+    );
+    // 内侧 1px 高光：模拟"光的切割面"，让渐变边缘更立体
+    box-shadow: inset 1px 0 0 var(--border-light);
+  }
+
+  // :has() 联动：tbody 有行被 hover 时，渐变起点同步到 hover 行的 tertiary 色，
+  // 让遮罩在视觉上和 hover 行"连成一片"，避免遮罩盖在 hover 行上产生撕裂
+  &:has(tbody tr:hover).has-overflow-right::after {
+    background: linear-gradient(
+      to left,
+      var(--bg-secondary),
       rgba(255, 255, 255, 0)
     );
   }
@@ -197,22 +220,28 @@ onBeforeUnmount(() => {
   border-collapse: collapse;
   font-size: 13px;
 
+  // ① 表头：浅灰底 + 加深下边框 + 字距让"中文方块"不挤
   thead {
     background: var(--bg-primary);
     th {
       padding: 14px 16px;
       font-weight: 600;
-      color: var(--text-secondary);
-      border-bottom: 1px solid var(--border-light);
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-color); // 比 border-light 略深
+      letter-spacing: 0.02em;
     }
   }
 
+  // ② ③ 数据行 & hover
+  // hover 行整体变 tertiary（6% 灰度差，比 primary 的 4% 更明显）
+  // 操作列保持自身颜色不变 —— 操作列本来就比数据列深，不需要再随 hover 变
   tbody tr {
-    &:hover { background: var(--bg-primary); }
     td {
       padding: 14px 16px;
       border-bottom: 1px solid var(--border-light);
+      transition: background-color 80ms linear; // 平滑过渡，工具感而不飘
     }
+    &:hover td { background: var(--bg-tertiary); }
     // 文本列才允许省略；最后一列（通常是操作列）保持原样
     td:not(:last-child) {
       overflow: hidden;
@@ -221,29 +250,24 @@ onBeforeUnmount(() => {
     }
   }
 
-  // 固定列：横向滚动时钉在容器右侧
+  // ④ ⑤ 悬浮列（操作列）
   .col-sticky {
     position: sticky;
     right: 0;
     z-index: 1;
-    // bg-tertiary 比数据列的 bg-secondary 深一档，与左侧形成色差，
-    // 静态时也能看出"这列是浮起来的"
+    // tbody 永远 tertiary，浮起感来自"和数据列的色差"
     background: var(--bg-tertiary);
-    // 硬分割线把"悬浮列"和"滚动列"在视觉上切开
-    box-shadow: -1px 0 0 var(--border-color);
+    // 立体"侧翼"：内 1px 亮边 + 外 软投影
+    box-shadow:
+      inset 1px 0 0 var(--border-light),
+      -2px 0 8px -2px rgba(0, 0, 0, 0.06);
   }
   thead .col-sticky {
-    background: var(--bg-tertiary);
-    z-index: 2; // 表头要压在 td 之上
-  }
-  tbody tr:hover .col-sticky {
+    // thead 用 primary —— 与表头其余列同色，仅靠 1px 边线标识"我是浮列"
     background: var(--bg-primary);
-  }
-  tbody tr:hover .col-sticky + .col-sticky,
-  tbody tr:hover td:last-child.col-sticky {
-    // hover 行内最后一列（操作列）跟非 hover 行保持同一深度，
-    // 不然会因为 hover 把"操作列"再次压平、视觉上"沉下去"
-    background: var(--bg-tertiary);
+    z-index: 2; // 表头压在 td 之上
+    // 去掉外投影（表头不需要"浮"），保留内亮边
+    box-shadow: inset 1px 0 0 var(--border-light);
   }
 }
 
