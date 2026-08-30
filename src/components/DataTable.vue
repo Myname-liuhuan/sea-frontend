@@ -61,6 +61,16 @@ function isStickyCol(col: DataTableColumn): boolean {
   return col.sticky ?? col.key === 'action'
 }
 
+// table-layout: fixed 下浏览器会把 width: 'auto' 列压成 0px
+// （固定列总和 > 容器宽度时 auto 列是第一个被牺牲的）。
+// 兜底成 150px：足够容纳 4 个中文字符 + ellipsis，视觉上仍能看出"有内容"。
+// 列定义里保留 'auto' 语义（表达"自适应"），组件层统一替换。
+const AUTO_COLUMN_FALLBACK_WIDTH = '150px'
+
+function effectiveWidth(col: DataTableColumn): string {
+  return col.width === 'auto' ? AUTO_COLUMN_FALLBACK_WIDTH : col.width
+}
+
 // ========== 横向溢出感知 ==========
 // 列宽总和 > 容器宽度时容器出现横向滚动条，操作列 sticky 悬浮在右边缘。
 // 用户第一眼会以为"创建时间列被覆盖"，所以加：
@@ -109,7 +119,7 @@ onBeforeUnmount(() => {
               v-for="col in columns"
               :key="col.key"
               :class="{ 'col-sticky': isStickyCol(col) }"
-              :style="{ width: col.width, textAlign: col.align ?? (col.key === 'action' ? 'center' : 'left') }"
+              :style="{ width: effectiveWidth(col), textAlign: col.align ?? (col.key === 'action' ? 'center' : 'left') }"
             >
               {{ col.title }}
             </th>
